@@ -40,6 +40,7 @@ class LogConsole : public QObject
 
 public:
     explicit LogConsole(QObject *parent = nullptr);
+    virtual ~LogConsole();
 
 private:
     void printScreen();

@@ -27,7 +27,7 @@ void messageOutput(QtMsgType type, const QMessageLogContext &context,
 
 Logger::Logger(QObject *parent) : QAbstractTableModel(parent)
 {
-    qInstallMessageHandler(messageOutput);
+
 }
 
 QVariant Logger::headerData(int section, Qt::Orientation orientation,
@@ -214,8 +214,14 @@ void Logger::log(const char *fileName, const char *function, int lineNumber,
     endInsertRows();
 }
 
+void Logger::installMessageHangler()
+{
+    qInstallMessageHandler(messageOutput);
+}
+
 void Logger::showDialog()
 {
+    installMessageHangler();
 #ifdef QT_WIDGETS_LIB
     showLogDialog *dialog = new showLogDialog;
     dialog->show();

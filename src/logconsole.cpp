@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <termios.h>
+#include <QFile>
+#include <QDataStream>
 
 using namespace std;
 
@@ -25,11 +27,28 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
     for (int i = 0; i < _model->columnCount(); i++)
         headerWidths.insert(i, 10);
 
+    QFile f("tabledata.dat");
+    if (f.exists()) {
+        f.open(QIODevice::ReadOnly);
+        QDataStream s(&f);
+        QHashIterator<int, int> i(headerWidths);
+        while (i.hasNext()) {
+            i.next();
+            int k;
+            int v;
+            s >> k;
+            s >> v;
+            headerWidths.insert(k, v);
+        }
+        f.close();
+    }
+
     connect(_model, &QAbstractItemModel::rowsInserted,
             [=](const QModelIndex &parent, int first, int last) {
         Q_UNUSED(parent);
         Q_UNUSED(last);
-        this->printRow(first);
+        beginRow = first;
+        this->printScreen();
     });
 
     struct termios old_tio, new_tio;
@@ -89,21 +108,49 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
         }
     });
 
+    connect(reader, &CinReader::keyPressed, [=](const int &n) {
+        if (n == 'q') {
+            delete this;
+        }
+    });
+
     printScreen();
     reader->start();
+}
+
+LogConsole::~LogConsole()
+{
+    QFile f("tabledata.dat");
+    f.open(QIODevice::WriteOnly);
+    QDataStream s(&f);
+    QHashIterator<int, int> i(headerWidths);
+    while (i.hasNext()) {
+        i.next();
+        s << i.key() << i.value();
+    }
+    f.close();
 }
 
 void LogConsole::printScreen()
 {
     system("clear");
+    int from = 0;
+    int to = lines;
+    int m = _model->rowCount();
+    if (m > lines && m - beginRow < lines) {
+        from = m - lines;
+        to = m;
+    }
+
+    cout << "\033[7;21m";
     for (int i = 0; i < headerWidths.size(); i++)
         cout << std::left << setw(headerWidths[i])
              << _model->headerData(i, Qt::Horizontal)
-                    .toString()
-                    .toLatin1()
-                    .data();
-    cout << endl;
-    for (int i = beginRow; i < beginRow + lines; i++)
+                .toString()
+                .toLatin1()
+                .data();
+    cout << "\033[0m" << endl;
+    for (int i = from; i < to; i++)
         printRow(i);
 
     for (int i = 0; i < width; i++)
@@ -115,17 +162,21 @@ void LogConsole::printScreen()
 
 void LogConsole::printRow(int row)
 {
+    if (beginRow == row)
+        cout << "\033[7m";
     for (int i = 0; i < headerWidths.size(); i++) {
         QString s = _model->data(_model->index(row, i, QModelIndex()),
                                  Qt::DisplayRole).toString();
         cutText(s, headerWidths.value(i, 10));
 
-        if (currentColumn == i)
+        if (beginRow != row && currentColumn == i)
             cout << "\033[1;31m";
         cout << std::left << setw(headerWidths[i]) << s.toLatin1().data();
-        if (currentColumn == i)
+        if (beginRow != row && currentColumn == i)
             cout << "\033[0m";
     }
+    if (beginRow == row)
+        cout << "\033[0m";
     cout << endl;
 }
 
@@ -134,14 +185,14 @@ void LogConsole::printSummry()
     for (int i = 0; i < _model->columnCount(); i++) {
         cout << setw(10)
              << _model->headerData(i, Qt::Horizontal)
-                    .toString()
-                    .toLatin1()
-                    .data()
+                .toString()
+                .toLatin1()
+                .data()
              << _model->data(_model->index(beginRow, i, QModelIndex()),
                              Qt::DisplayRole)
-                    .toString()
-                    .toLatin1()
-                    .data() << endl;
+                .toString()
+                .toLatin1()
+                .data() << endl;
     }
 }
 
@@ -179,8 +230,8 @@ void CinReader::run()
             cin.clear();
             break;
 
-//        default:
-//            cout<<"*"<<i<<"*"<<endl;
+        default:
+            emit keyPressed(i);
         }
     }
 }
