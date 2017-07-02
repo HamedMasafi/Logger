@@ -1,30 +1,37 @@
 #include <QtCore/QDebug>
 
 #include <QMetaMethod>
-#include "showlogdialog.h"
+#include <iostream>
+
+#ifdef QT_WIDGETS_LIB
+#   include "showlogdialog.h"
+#else
+#   include "logconsole.h"
+#endif
 
 #include "logger.h"
 
-#define COL_ID          0
-#define COL_Type        1
-#define COL_TITLE       2
-#define COL_File        3
-#define COL_Function    4
-#define COL_Line        5
+#define COL_ID 0
+#define COL_Type 1
+#define COL_TITLE 2
+#define COL_File 3
+#define COL_Function 4
+#define COL_Line 5
 
-void messageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+void messageOutput(QtMsgType type, const QMessageLogContext &context,
+                   const QString &msg)
 {
-    Logger::instance()->log(
-                context.file, context.function, context.line,
-                type, msg.toLocal8Bit().data());
+    Logger::instance()->log(context.file, context.function, context.line, type,
+                            msg.toLocal8Bit().data());
 }
 
-Logger::Logger(QObject *parent)
-    : QAbstractTableModel(parent)
+Logger::Logger(QObject *parent) : QAbstractTableModel(parent)
 {
+    qInstallMessageHandler(messageOutput);
 }
 
-QVariant Logger::headerData(int section, Qt::Orientation orientation, int role) const
+QVariant Logger::headerData(int section, Qt::Orientation orientation,
+                            int role) const
 {
     if (role != Qt::DisplayRole)
         return QVariant();
@@ -50,16 +57,16 @@ QVariant Logger::headerData(int section, Qt::Orientation orientation, int role) 
 
 int Logger::rowCount(const QModelIndex &parent) const
 {
-//    if (!parent.isValid())
-//        return 0;
+    //    if (!parent.isValid())
+    //        return 0;
 
     return dataList.count();
 }
 
 int Logger::columnCount(const QModelIndex &parent) const
 {
-//    if (!parent.isValid())
-//        return 0;
+    //    if (!parent.isValid())
+    //        return 0;
 
     return 6;
 }
@@ -78,7 +85,7 @@ QVariant Logger::data(const QModelIndex &index, int role) const
         switch (index.column()) {
         case COL_ID:
             return index.row() + 1;
-        case COL_Type:{
+        case COL_Type: {
             switch (d->type) {
             case QtDebugMsg:
                 return "Debug";
@@ -141,38 +148,39 @@ Logger *Logger::instance()
 {
     static Logger *instance = 0;
 
-    if(!instance)
+    if (!instance)
         instance = new Logger;
 
     return instance;
 }
 
-void Logger::log(const char *fileName, const char *function, int lineNumber, QtMsgType type, const char *templateString,
-                 QVariant val0, QVariant val1, QVariant val2,
-                 QVariant val3, QVariant val4, QVariant val5,
-                 QVariant val6, QVariant val7, QVariant val8, QVariant val9)
+void Logger::log(const char *fileName, const char *function, int lineNumber,
+                 QtMsgType type, const char *templateString, QVariant val0,
+                 QVariant val1, QVariant val2, QVariant val3, QVariant val4,
+                 QVariant val5, QVariant val6, QVariant val7, QVariant val8,
+                 QVariant val9)
 {
     QString s(templateString);
 
-    if(val0 != QVariant())
+    if (val0 != QVariant())
         s = s.arg(val0.toString());
-    if(val1 != QVariant())
+    if (val1 != QVariant())
         s = s.arg(val1.toString());
-    if(val2 != QVariant())
+    if (val2 != QVariant())
         s = s.arg(val2.toString());
-    if(val3 != QVariant())
+    if (val3 != QVariant())
         s = s.arg(val3.toString());
-    if(val4 != QVariant())
+    if (val4 != QVariant())
         s = s.arg(val4.toString());
-    if(val5 != QVariant())
+    if (val5 != QVariant())
         s = s.arg(val5.toString());
-    if(val6 != QVariant())
+    if (val6 != QVariant())
         s = s.arg(val6.toString());
-    if(val7 != QVariant())
+    if (val7 != QVariant())
         s = s.arg(val7.toString());
-    if(val8 != QVariant())
+    if (val8 != QVariant())
         s = s.arg(val8.toString());
-    if(val9 != QVariant())
+    if (val9 != QVariant())
         s = s.arg(val9.toString());
 
     beginInsertRows(QModelIndex(), dataList.count(), dataList.count() + 1);
@@ -187,28 +195,32 @@ void Logger::log(const char *fileName, const char *function, int lineNumber, QtM
     l->body = QString::null;
     dataList.append(l);
 
-    switch (l->type) {
-    case QtDebugMsg:
-        qDebug(l->title.toLocal8Bit().data());
-        break;
-    case QtInfoMsg:
-        qInfo(l->title.toLocal8Bit().data());
-        break;
-    case QtWarningMsg:
-        qWarning(l->title.toLocal8Bit().data());
-        break;
-    case QtCriticalMsg:
-        qCritical(l->title.toLocal8Bit().data());
-        break;
-    case QtFatalMsg:
-        qFatal(l->title.toLocal8Bit().data());
-    }
+//    switch (l->type) {
+//    case QtDebugMsg:
+//        qDebug("%s", l->title.toLocal8Bit().data());
+//        break;
+//    case QtInfoMsg:
+//        qInfo("%s", l->title.toLocal8Bit().data());
+//        break;
+//    case QtWarningMsg:
+//        qWarning("%s", l->title.toLocal8Bit().data());
+//        break;
+//    case QtCriticalMsg:
+//        qCritical("%s", l->title.toLocal8Bit().data());
+//        break;
+//    case QtFatalMsg:
+//        qFatal("%s", l->title.toLocal8Bit().data());
+//    }
     endInsertRows();
 }
 
 void Logger::showDialog()
 {
-    qInstallMessageHandler(messageOutput);
+#ifdef QT_WIDGETS_LIB
     showLogDialog *dialog = new showLogDialog;
     dialog->show();
+#else
+    LogConsole *c = new LogConsole(this);
+    Q_UNUSED(c);
+#endif
 }
