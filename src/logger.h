@@ -55,6 +55,7 @@ public:
              QVariant val8 = QVariant(),
              QVariant val9 = QVariant());
 
+    void installMessageHangler();
     void showDialog();
 
 private:
