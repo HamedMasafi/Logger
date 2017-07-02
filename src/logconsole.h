@@ -24,6 +24,7 @@ signals:
     void rightPressed();
     void plusPressed();
     void minusPressed();
+    void returnPressed();
 };
 
 class LogConsole : public QObject
@@ -37,6 +38,7 @@ class LogConsole : public QObject
     int height;
     int currentColumn;
     CinReader *reader;
+    bool summryMode;
 
 public:
     explicit LogConsole(QObject *parent = nullptr);

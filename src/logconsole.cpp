@@ -12,6 +12,7 @@
 #include <QFile>
 #include <QDataStream>
 
+
 using namespace std;
 
 #define KEY_UP 65
@@ -69,17 +70,24 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
     currentColumn = -1;
 
     CinReader *reader = new CinReader;
+    summryMode = false;
 
-    connect(reader, &CinReader::upPressed, [=]() {
+    connect(reader, &CinReader::upPressed, [&]() {
         if (beginRow > 0) {
             beginRow--;
-            this->printScreen();
+            if (summryMode)
+                this->printSummry();
+            else
+                this->printScreen();
         }
     });
-    connect(reader, &CinReader::downPressed, [=]() {
+    connect(reader, &CinReader::downPressed, [&]() {
         if (beginRow < _model->rowCount() - 1) {
             beginRow++;
-            this->printScreen();
+            if (summryMode)
+                this->printSummry();
+            else
+                this->printScreen();
         }
     });
 
@@ -114,6 +122,14 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
         }
     });
 
+    connect(reader, &CinReader::returnPressed, [=]() {
+        summryMode = !summryMode;
+        if (summryMode)
+            this->printSummry();
+        else
+            this->printScreen();
+    });
+
     printScreen();
     reader->start();
 }
@@ -133,7 +149,9 @@ LogConsole::~LogConsole()
 
 void LogConsole::printScreen()
 {
-    system("clear");
+//    system("clear");
+    cout << "\033[1;1H";
+
     int from = 0;
     int to = lines;
     int m = _model->rowCount();
@@ -158,6 +176,8 @@ void LogConsole::printScreen()
     cout << endl;
 
     printSummry();
+
+    cout << "\033[1;1H";
 }
 
 void LogConsole::printRow(int row)
@@ -182,6 +202,16 @@ void LogConsole::printRow(int row)
 
 void LogConsole::printSummry()
 {
+    if (summryMode) {
+        cout << "\033[1;1H" << "\033[J";
+        cout << "\033[7m";
+        cout << setw(10) << beginRow
+             << " of " <<
+                setw(10) << _model->rowCount() << endl;
+        cout << "\033[0m";
+    }
+
+
     for (int i = 0; i < _model->columnCount(); i++) {
         cout << setw(10)
              << _model->headerData(i, Qt::Horizontal)
@@ -228,6 +258,10 @@ void CinReader::run()
         case KEY_MINUS:
             emit minusPressed();
             cin.clear();
+            break;
+
+        case 10:
+            emit returnPressed();
             break;
 
         default:
