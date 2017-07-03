@@ -15,9 +15,13 @@
 #define K_ERROR(...)        Logger::instance()->log(__FILE__, __FUNCTION__, __LINE__, QtCriticalMsg, __VA_ARGS__)
 
 class LogModel;
+class QFile;
+class QTextStream;
 class Logger : public QAbstractTableModel
 {
     Q_OBJECT
+    QFile *logFile;
+    QTextStream *stream;
 
 public:
     Logger(QObject *parent = 0);
@@ -69,7 +73,7 @@ private:
         int line;
     };
     QList<LogData*> dataList;
-
+    QString typeText(QtMsgType type) const;
 };
 
 #endif // LOGGER_H

@@ -11,6 +11,7 @@
 #include <termios.h>
 #include <QFile>
 #include <QDataStream>
+#include <signal.h>
 
 
 using namespace std;
@@ -22,11 +23,22 @@ using namespace std;
 #define KEY_PLUS 43
 #define KEY_MINUS 45
 
+QList<LogConsole*> instances;
+void resizeHandler(int sig)
+{
+    foreach (LogConsole *c, instances)
+        c->screenSizeChanged();
+}
+
+
 LogConsole::LogConsole(QObject *parent) : QObject(parent)
 {
+    instances.append(this);
     _model = Logger::instance();
     for (int i = 0; i < _model->columnCount(); i++)
         headerWidths.insert(i, 10);
+
+    signal(SIGWINCH, resizeHandler);
 
     QFile f("tabledata.dat");
     if (f.exists()) {
@@ -59,14 +71,9 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
     new_tio.c_lflag &= (~ICANON & ~ECHO);
     tcsetattr(STDIN_FILENO, TCSANOW, &new_tio);
 
-    struct winsize w;
-    ioctl(0, TIOCGWINSZ, &w);
-
-    width = w.ws_col;
-    height = w.ws_row;
+    screenSizeChanged();
 
     beginRow = 0;
-    lines = height - _model->columnCount() - 3;
     currentColumn = -1;
 
     CinReader *reader = new CinReader;
@@ -104,6 +111,14 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
         }
     });
     connect(reader, &CinReader::plusPressed, [=]() {
+        int sum = 0;
+        QHashIterator<int, int> i(headerWidths);
+        while (i.hasNext()) {
+            i.next();
+            sum += i.value();
+        }
+        if (sum >= width - 1)
+            return;
         if (currentColumn >= 0 && currentColumn < _model->columnCount() - 1) {
             headerWidths[currentColumn]++;
             this->printScreen();
@@ -147,10 +162,24 @@ LogConsole::~LogConsole()
     f.close();
 }
 
+void LogConsole::screenSizeChanged()
+{
+
+    struct winsize w;
+    ioctl(0, TIOCGWINSZ, &w);
+
+    LogConsole::width = w.ws_col;
+    LogConsole::height = w.ws_row;
+
+    lines = height - _model->columnCount() - 3;
+
+    printScreen();
+}
+
 void LogConsole::printScreen()
 {
 //    system("clear");
-    cout << "\033[1;1H";
+    cout << "\033[1;1H" << "\033[J";
 
     int from = 0;
     int to = lines;
@@ -205,7 +234,7 @@ void LogConsole::printSummry()
     if (summryMode) {
         cout << "\033[1;1H" << "\033[J";
         cout << "\033[7m";
-        cout << setw(10) << beginRow
+        cout << setw(10) << (beginRow + 1)
              << " of " <<
                 setw(10) << _model->rowCount() << endl;
         cout << "\033[0m";
@@ -217,12 +246,15 @@ void LogConsole::printSummry()
              << _model->headerData(i, Qt::Horizontal)
                 .toString()
                 .toLatin1()
-                .data()
-             << _model->data(_model->index(beginRow, i, QModelIndex()),
-                             Qt::DisplayRole)
-                .toString()
-                .toLatin1()
-                .data() << endl;
+                .data();
+
+        QString buffer = _model->data(_model->index(beginRow, i, QModelIndex()),
+                                      Qt::DisplayRole)
+                         .toString();
+        if (!summryMode)
+            cutText(buffer, width - 10);
+
+        cout << buffer.toLatin1().data() << endl;
     }
 }
 

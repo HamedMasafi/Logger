@@ -1,5 +1,7 @@
 #include <QtCore/QDebug>
 
+#include <QFile>
+#include <QDateTime>
 #include <QMetaMethod>
 #include <iostream>
 
@@ -27,7 +29,9 @@ void messageOutput(QtMsgType type, const QMessageLogContext &context,
 
 Logger::Logger(QObject *parent) : QAbstractTableModel(parent)
 {
-
+    logFile = new QFile(QDateTime::currentDateTime().toString("ddMMdd-hhmmss.log"));
+    logFile->open(QIODevice::WriteOnly | QIODevice::Text);
+    stream = new QTextStream(logFile);
 }
 
 QVariant Logger::headerData(int section, Qt::Orientation orientation,
@@ -86,22 +90,7 @@ QVariant Logger::data(const QModelIndex &index, int role) const
         case COL_ID:
             return index.row() + 1;
         case COL_Type: {
-            switch (d->type) {
-            case QtDebugMsg:
-                return "Debug";
-                break;
-            case QtInfoMsg:
-                return "Info";
-                break;
-            case QtWarningMsg:
-                return "Warning";
-                break;
-            case QtCriticalMsg:
-                return "Error";
-                break;
-            case QtFatalMsg:
-                return "Fatal";
-            }
+            return typeText(d->type);
         }
         case COL_TITLE:
             return d->title;
@@ -195,6 +184,11 @@ void Logger::log(const char *fileName, const char *function, int lineNumber,
     l->body = QString::null;
     dataList.append(l);
 
+    *stream << dataList.count() << " "
+            << "[" << typeText(type) << "] "
+            << s
+            << endl;
+
 //    switch (l->type) {
 //    case QtDebugMsg:
 //        qDebug("%s", l->title.toLocal8Bit().data());
@@ -229,4 +223,24 @@ void Logger::showDialog()
     LogConsole *c = new LogConsole(this);
     Q_UNUSED(c);
 #endif
+}
+
+QString Logger::typeText(QtMsgType type) const
+{
+    switch (type) {
+    case QtDebugMsg:
+        return "Debug";
+        break;
+    case QtInfoMsg:
+        return "Info";
+        break;
+    case QtWarningMsg:
+        return "Warning";
+        break;
+    case QtCriticalMsg:
+        return "Error";
+        break;
+    case QtFatalMsg:
+        return "Fatal";
+    }
 }

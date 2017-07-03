@@ -34,15 +34,16 @@ class LogConsole : public QObject
     int beginRow;
     int lines;
     QHash<int, int> headerWidths;
-    int width;
-    int height;
     int currentColumn;
     CinReader *reader;
     bool summryMode;
+    int width;
+    int height;
 
 public:
     explicit LogConsole(QObject *parent = nullptr);
     virtual ~LogConsole();
+    void screenSizeChanged();
 
 private:
     void printScreen();
