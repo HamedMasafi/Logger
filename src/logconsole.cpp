@@ -62,12 +62,14 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
             [=](const QModelIndex &parent, int first, int last) {
         Q_UNUSED(parent);
         Q_UNUSED(last);
-        beginRow = first;
-        this->printScreen();
 
         if (terminalMode) {
-            cout << L(_model->data(_model->index(first, 1))) << ": "
-                 << L(_model->data(_model->index(first, 2))) << endl;
+            for(int i = first; i < last; i++)
+                cout << L(_model->data(_model->index(i, 1))) << ": "
+                     << L(_model->data(_model->index(i, 2))) << endl;
+        } else {
+            beginRow = first;
+            this->printScreen();
         }
 
     });
@@ -145,7 +147,7 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
         }
         if (n == 't') {
             terminalMode = !terminalMode;
-            this->printScreen();
+            cout << "\033[1;1H" << "\033[J";
         }
     });
 
