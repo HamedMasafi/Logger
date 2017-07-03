@@ -37,6 +37,7 @@ class LogConsole : public QObject
     int currentColumn;
     CinReader *reader;
     bool summryMode;
+    bool terminalMode;
     int width;
     int height;
 

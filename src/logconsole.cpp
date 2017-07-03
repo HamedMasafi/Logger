@@ -23,6 +23,8 @@ using namespace std;
 #define KEY_PLUS 43
 #define KEY_MINUS 45
 
+#define L(s) s.toString().toLatin1().data()
+
 QList<LogConsole*> instances;
 void resizeHandler(int sig)
 {
@@ -62,6 +64,12 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
         Q_UNUSED(last);
         beginRow = first;
         this->printScreen();
+
+        if (terminalMode) {
+            cout << L(_model->data(_model->index(first, 1))) << ": "
+                 << L(_model->data(_model->index(first, 2))) << endl;
+        }
+
     });
 
     struct termios old_tio, new_tio;
@@ -77,7 +85,7 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
     currentColumn = -1;
 
     CinReader *reader = new CinReader;
-    summryMode = false;
+    summryMode = terminalMode = false;
 
     connect(reader, &CinReader::upPressed, [&]() {
         if (beginRow > 0) {
@@ -135,9 +143,15 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
         if (n == 'q') {
             delete this;
         }
+        if (n == 't') {
+            terminalMode = !terminalMode;
+            this->printScreen();
+        }
     });
 
     connect(reader, &CinReader::returnPressed, [=]() {
+        if(terminalMode)
+            return;
         summryMode = !summryMode;
         if (summryMode)
             this->printSummry();
@@ -178,8 +192,9 @@ void LogConsole::screenSizeChanged()
 
 void LogConsole::printScreen()
 {
-//    system("clear");
     cout << "\033[1;1H" << "\033[J";
+    if (terminalMode)
+        return;
 
     int from = 0;
     int to = lines;
