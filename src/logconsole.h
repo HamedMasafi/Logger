@@ -40,6 +40,18 @@ class LogConsole : public QObject
     bool terminalMode;
     int width;
     int height;
+    QString status;
+
+    enum Color{
+        Black,
+        Red,
+        Green,
+        Yellow,
+        Blue,
+        Magenta,
+        Cyan,
+        White
+    };
 
 public:
     explicit LogConsole(QObject *parent = nullptr);
@@ -51,6 +63,10 @@ private:
     void printRow(int i);
     void printSummry();
     void cutText(QString &s, int len);
+    void clearScreen();
+    void setTextColor(Color text, Color bg = Black, bool bright = true);
+    void restoreTxetColor();
+    void inverseColorBg();
 
 signals:
 
