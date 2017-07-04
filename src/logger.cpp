@@ -208,14 +208,9 @@ void Logger::log(const char *fileName, const char *function, int lineNumber,
     endInsertRows();
 }
 
-void Logger::installMessageHangler()
+void Logger::init()
 {
     qInstallMessageHandler(messageOutput);
-}
-
-void Logger::showDialog()
-{
-    installMessageHangler();
 #ifdef QT_WIDGETS_LIB
     showLogDialog *dialog = new showLogDialog;
     dialog->show();
