@@ -23,6 +23,10 @@ using namespace std;
 #define KEY_MINUS 45
 
 #define L(s) s.toString().toLatin1().data()
+#define VLINE "│"
+#define HLINE "―"
+#define HLINE_TOP "┴"
+#define CORNER_BL "└"
 
 QList<LogConsole *> instances;
 void resizeHandler(int sig)
@@ -33,6 +37,8 @@ void resizeHandler(int sig)
 
 LogConsole::LogConsole(QObject *parent) : QObject(parent)
 {
+    beginColumn = 0;
+    printLines = true;
     status = "t=Terminal mode    Enter=Show details    +/-=Change column size";
     instances.append(this);
     _model = Logger::instance();
@@ -116,8 +122,9 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
         if(terminalMode)
             return;
 
-        if (currentColumn > 0) {
-            currentColumn--;
+        if (beginColumn > 0) {
+            beginColumn--;
+            status = QString::number(beginColumn);
             this->printScreen();
         }
     });
@@ -125,23 +132,37 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
         if(terminalMode)
             return;
 
-        if (currentColumn < _model->columnCount() - 1) {
-            currentColumn++;
+        if (beginColumn < width) {
+            beginColumn++;
+            status = QString::number(beginColumn);
             this->printScreen();
         }
     });
+
+    connect(reader, &CinReader::tabPressed, [=](bool shift) {
+        if (shift){
+            if (--currentColumn <= -1)
+                currentColumn = headerWidths.size() - 1;
+        } else {
+            if (++currentColumn == headerWidths.size())
+                currentColumn = 0;
+        }
+
+        this->printScreen();
+    });
+
     connect(reader, &CinReader::plusPressed, [=]() {
         if(terminalMode)
             return;
 
-        int sum = 0;
-        QHashIterator<int, int> i(headerWidths);
-        while (i.hasNext()) {
-            i.next();
-            sum += i.value();
-        }
-        if (sum >= width - 1)
-            return;
+//        int sum = 0;
+//        QHashIterator<int, int> i(headerWidths);
+//        while (i.hasNext()) {
+//            i.next();
+//            sum += i.value();
+//        }
+//        if (sum >= width - 1)
+//            return;
         if (currentColumn >= 0 && currentColumn < _model->columnCount() - 1) {
             headerWidths[currentColumn]++;
             this->printScreen();
@@ -151,7 +172,7 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
         if(terminalMode)
             return;
 
-        if (currentColumn >= 0 && currentColumn < _model->columnCount() - 1) {
+        if (currentColumn >= 0 && currentColumn < _model->columnCount() - 1 && headerWidths[currentColumn] > 0) {
             headerWidths[currentColumn]--;
             this->printScreen();
         }
@@ -161,6 +182,13 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
         if (n == 'q') {
             delete this;
 //            reader->quit();
+        }
+        if (n == '|') {
+            printLines = !printLines;
+            this->printScreen();
+        }
+        if (n == '0') {
+            headerWidths[0] = 0;
         }
         if (n == 't') {
             terminalMode = !terminalMode;
@@ -232,28 +260,43 @@ void LogConsole::printScreen()
         to = m;
     }
 
-    inverseColorBg();
-    int rowLen = 0;
-    for (int i = 0; i < headerWidths.size(); i++) {
-        cout << std::left << setw(headerWidths[i])
-             << _model->headerData(i, Qt::Horizontal)
-                    .toString()
-                    .toLatin1()
-                    .data();
-        rowLen += headerWidths[i];
-    }
+//    const char *l = "";
+//    if (printLines)
+//        l = VLINE;
 
-    if (rowLen < width)
-        for (int i = rowLen; i < width; i++)
-            cout << " ";
-    restoreTxetColor();
-    cout << endl;
+//    inverseColorBg();
+//    int rowLen = 0;
+//    for (int i = 0; i < headerWidths.size(); i++) {
+//        cout << l << std::left << setw(headerWidths[i])
+//             << _model->headerData(i, Qt::Horizontal)
+//                    .toString()
+//                    .toLatin1()
+//                    .data();
+//        rowLen += headerWidths[i] + (printLines ? 1 : 0);
+//    }
+//    cout << l;
+//    if (rowLen < width)
+//        for (int i = rowLen; i < width - (printLines ? 1 : 0); i++)
+//            cout << " ";
+//    restoreTxetColor();
+//    cout << endl;
+
+    printRow(-1);
     for (int i = from; i < to; i++)
         printRow(i);
 
-    for (int i = 0; i < width; i++)
-        cout << "―";
-    cout << endl;
+//    if (printLines) {
+//        for (int i = 0; i < headerWidths.size(); i++) {
+//            for (int n = 0; n < headerWidths[i]; n++)
+//                cout << HLINE;
+//            cout << HLINE_TOP;
+//        }
+//    } else {
+//        for (int i = 0; i < width; i++)
+//            cout << HLINE;
+//    }
+//    cout << endl;
+    printRow(-2);
 
     printSummry();
     inverseColorBg();
@@ -263,48 +306,152 @@ void LogConsole::printScreen()
     restoreTxetColor();
 }
 
+void LogConsole::printType(QString t, bool printColon)
+{
+
+    if (t == "Debug")
+        setTextColor(Blue);
+    else if (t == "Info")
+        setTextColor(Cyan);
+    else if (t == "Warning")
+        setTextColor(Yellow);
+    else if (t == "Error" || t == "Fatal")
+        setTextColor(Red);
+    else
+        setTextColor(Magenta);
+
+    cout << t.toLatin1().data();
+    if (printColon)
+            cout << ": ";
+    restoreTxetColor();
+}
+
+//void LogConsole::printRow(int row)
+//{
+//    if (terminalMode) {
+//        QString t = _model->data(_model->index(row, 1)).toString();
+
+//        printType(t);
+
+//        cout << L(_model->data(_model->index(row, 2))) << endl;
+//        return;
+//    }
+//    const char *l = "";
+//    if (printLines)
+//        l = VLINE;
+
+//    int rowLen = 0;
+//    if (beginRow == row)
+//        inverseColorBg();
+
+//    for (int i = 0; i < headerWidths.size(); i++) {
+//        QString s = _model->data(_model->index(row, i, QModelIndex()),
+//                                 Qt::DisplayRole).toString();
+
+//        int fieldLen = headerWidths.value(i, 10);
+
+//        if (rowLen + fieldLen > width - (printLines ? 1 : 0))
+//            fieldLen = width - rowLen - (printLines ? 1 : 0);
+
+//        cutText(s, fieldLen);
+
+//        cout << l;
+//        if (beginRow != row && currentColumn == i)
+//            setTextColor(Yellow, Black, true);
+
+//        cout << std::left << setw(fieldLen) << s.toLatin1().data();
+
+//        if (beginRow != row && currentColumn == i)
+//            restoreTxetColor();
+
+//        rowLen += fieldLen + (printLines ? 1 : 0);
+
+//        if (rowLen >= width)
+//            break;
+//    }
+
+//    cout << l;
+//    if (beginRow == row) {
+//        if (rowLen < width)
+//            for (int i = rowLen; i < width - (printLines ? 1 : 0); i++)
+//                cout << " ";
+//        restoreTxetColor();
+//    }
+//    cout << endl;
+//}
+
 void LogConsole::printRow(int row)
 {
     if (terminalMode) {
         QString t = _model->data(_model->index(row, 1)).toString();
 
-        if (t == "Debug")
-            setTextColor(Blue);
-
-        if (t == "Info")
-            setTextColor(Cyan);
-
-        if (t == "Warning")
-            setTextColor(Yellow);
-
-        if (t == "Error" || t == "Fatal")
-            setTextColor(Red);
-
-        cout << t.toLatin1().data() << ": ";
-        restoreTxetColor();
+        printType(t);
 
         cout << L(_model->data(_model->index(row, 2))) << endl;
         return;
     }
-    int rowLen = 0;
-    if (beginRow == row)
-        inverseColorBg();
-    for (int i = 0; i < headerWidths.size(); i++) {
-        QString s = _model->data(_model->index(row, i, QModelIndex()),
-                                 Qt::DisplayRole).toString();
-        cutText(s, headerWidths.value(i, 10));
 
-        if (beginRow != row && currentColumn == i)
-            setTextColor(Red, Black, true);
-        cout << std::left << setw(headerWidths[i]) << s.toLatin1().data();
-        if (beginRow != row && currentColumn == i)
+    int skipped = 0;
+    bool isHeader = row == -1;
+    const char *l = "";
+    if (printLines)
+        l = (row == -2) ? HLINE_TOP : VLINE;
+
+    int rowLen = 0;
+    if (beginRow == row || isHeader)
+        inverseColorBg();
+
+    for (int i = 0; i < headerWidths.size(); i++) {
+        skipped += headerWidths[i];
+        if (skipped <= beginColumn)
+            continue;
+
+        QString s = "";
+
+        if(row == -1){
+            s = _model->headerData(i, Qt::Horizontal).toString();
+        } else if (row != -2){
+            s = _model->data(_model->index(row, i, QModelIndex()),
+                             Qt::DisplayRole).toString();
+        }
+
+        int fieldLen = headerWidths.value(i, 10);
+
+        if (rowLen + fieldLen > width - (printLines ? 1 : 0))
+            fieldLen = width - rowLen - (printLines ? 1 : 0);
+
+        if (skipped > beginColumn && skipped - fieldLen < beginColumn) {
+            s = s.remove(0, fieldLen - (skipped - beginColumn));
+            fieldLen = skipped - beginColumn;
+        } else {
+            if (i)
+                cout << l;
+        }
+
+        cutText(s, fieldLen);
+
+        if (row >= 0 && beginRow != row && currentColumn == i)
+            setTextColor(Yellow, Black, true);
+
+        if (row == -2)
+            for(int ic = 0; ic < fieldLen; ic++)
+                cout << HLINE;
+        else
+            cout << std::left << setw(fieldLen) << s.toLatin1().data();
+
+        if (row >= 0 && beginRow != row && currentColumn == i)
             restoreTxetColor();
-        rowLen += headerWidths[i];
+
+        rowLen += fieldLen + (printLines ? 1 : 0);
+
+        if (rowLen >= width)
+            break;
     }
-    if (beginRow == row) {
+
+    if (beginRow == row || row < 0) {
         if (rowLen < width)
-            for (int i = rowLen; i < width; i++)
-                cout << " ";
+            for (int i = rowLen; i < width - (printLines ? 1 : 0); i++)
+                cout << (row == -2 ? HLINE : " ");
         restoreTxetColor();
     }
     cout << endl;
@@ -333,8 +480,21 @@ void LogConsole::printSummry()
         if (!summryMode)
             cutText(buffer, width - 10);
 
-        cout << buffer.toLatin1().data() << endl;
+        if (i == 1)
+            printType(buffer, false);
+        else
+            cout << buffer.toLatin1().data();
+
+        cout << endl;
     }
+}
+
+QString LogConsole::fill(const char *s, int len)
+{
+    QString st;
+    for(int i = 0; i < len; i++)
+        st.append(HLINE);
+    return st;
 }
 
 void LogConsole::cutText(QString &s, int len)
@@ -347,6 +507,11 @@ void LogConsole::clearScreen()
 {
     cout << "\033[1;1H"
          << "\033[J";
+}
+
+void LogConsole::moveCursor(int x, int y)
+{
+    cout << QString("\033[<%1><%1>").arg(x).arg(y).toLatin1().data();
 }
 
 void LogConsole::setTextColor(Color text, Color bg, bool bright)
@@ -411,7 +576,16 @@ void CinReader::run()
             emit returnPressed();
             break;
 
+        case 9:
+            emit tabPressed(false);
+            break;
+
+        case 90:
+            emit tabPressed(true);
+            break;
+
         default:
+//            cout << i << endl;
             emit keyPressed(i);
         }
     }
