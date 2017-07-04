@@ -24,6 +24,12 @@ class Logger : public QAbstractTableModel
     QTextStream *stream;
 
 public:
+    enum Flag{
+        TerminalLines = 1,
+        TerminalMode = 2
+    };
+    Q_FLAG(Flag)
+
     Logger(QObject *parent = 0);
 
     // Header:
@@ -59,8 +65,7 @@ public:
              QVariant val8 = QVariant(),
              QVariant val9 = QVariant());
 
-    void installMessageHangler();
-    void showDialog();
+    void init(Flag f = TerminalLines);
 
 private:
     struct LogData{

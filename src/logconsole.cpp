@@ -12,6 +12,7 @@
 #include <QFile>
 #include <QDataStream>
 #include <signal.h>
+#include <QtMath>
 
 using namespace std;
 
@@ -27,23 +28,30 @@ using namespace std;
 #define HLINE "―"
 #define HLINE_TOP "┴"
 #define CORNER_BL "└"
+#define CORNER_BR "┘"
+#define HBOX "\u25AC"
+#define VBOX "\u2503"
 
 QList<LogConsole *> instances;
 void resizeHandler(int sig)
 {
+    Q_UNUSED(sig)
     foreach (LogConsole *c, instances)
         c->screenSizeChanged();
 }
 
 LogConsole::LogConsole(QObject *parent) : QObject(parent)
 {
+    beginRow = 0;
     beginColumn = 0;
     printLines = true;
-    status = "t=Terminal mode    Enter=Show details    +/-=Change column size";
+    status = "t=Terminal mode    Enter=Show details    +/-=Change column size   0-5=Show/Hide columns";
     instances.append(this);
     _model = Logger::instance();
-    for (int i = 0; i < _model->columnCount(); i++)
+    for (int i = 0; i < _model->columnCount(); i++) {
         headerWidths.insert(i, 10);
+        headerVisible.insert(i, true);
+    }
 
     signal(SIGWINCH, resizeHandler);
 
@@ -56,9 +64,12 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
             i.next();
             int k;
             int v;
+            bool b;
             s >> k;
             s >> v;
+            s >> b;
             headerWidths.insert(k, v);
+            headerVisible.insert(k, b);
         }
         f.close();
     }
@@ -72,7 +83,8 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
             for (int i = first; i < last; i++)
                 this->printRow(i);
         } else {
-            beginRow = first;
+            currentRow = first;
+            beginRow = qMax(0, first - lines);
             this->printScreen();
         }
 
@@ -87,7 +99,7 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
 
     screenSizeChanged();
 
-    beginRow = 0;
+    currentRow = 0;
     currentColumn = -1;
 
     CinReader *reader = new CinReader;
@@ -97,8 +109,10 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
         if(terminalMode)
             return;
 
-        if (beginRow > 0) {
-            beginRow--;
+        if (currentRow > 0) {
+            currentRow--;
+            if (beginRow == currentRow + 1)
+                beginRow = qMax(0, beginRow - 1);
             if (summryMode)
                 this->printSummry();
             else
@@ -109,8 +123,10 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
         if(terminalMode)
             return;
 
-        if (beginRow < _model->rowCount() - 1) {
-            beginRow++;
+        if (currentRow < _model->rowCount() - 1) {
+            currentRow++;
+            if (currentRow - beginRow >= lines)
+                beginRow++;
             if (summryMode)
                 this->printSummry();
             else
@@ -124,17 +140,21 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
 
         if (beginColumn > 0) {
             beginColumn--;
-            status = QString::number(beginColumn);
             this->printScreen();
         }
     });
     connect(reader, &CinReader::rightPressed, [=]() {
         if(terminalMode)
             return;
-
-        if (beginColumn < width) {
+int rowLen = 0;
+        QHashIterator<int, int> i(headerWidths);
+        while (i.hasNext()) {
+            i.next();
+            if (headerVisible[i.key()])
+                rowLen += i.value();
+        }
+        if (beginColumn < rowLen - width - 2) {
             beginColumn++;
-            status = QString::number(beginColumn);
             this->printScreen();
         }
     });
@@ -176,6 +196,11 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
             headerWidths[currentColumn]--;
             this->printScreen();
         }
+    });
+
+    connect(reader, &CinReader::numPressed, [=](const int &num) {
+        headerVisible[num] = !headerVisible[num];
+        this->printScreen();
     });
 
     connect(reader, &CinReader::keyPressed, [=](const int &n) {
@@ -227,7 +252,7 @@ LogConsole::~LogConsole()
     QHashIterator<int, int> i(headerWidths);
     while (i.hasNext()) {
         i.next();
-        s << i.key() << i.value();
+        s << i.key() << i.value() << headerVisible[i.key()];
     }
     f.close();
 }
@@ -241,7 +266,7 @@ void LogConsole::screenSizeChanged()
     LogConsole::width = w.ws_col;
     LogConsole::height = w.ws_row;
 
-    lines = height - _model->columnCount() - 3;
+    lines = height - _model->columnCount() - 4;
 
     printScreen();
 }
@@ -252,57 +277,54 @@ void LogConsole::printScreen()
     if (terminalMode)
         return;
 
-    int from = 0;
-    int to = lines;
+    int from = beginRow;
+    int to = from + lines;
     int m = _model->rowCount();
-    if (m > lines && m - beginRow < lines) {
-        from = m - lines;
-        to = m;
-    }
-
-//    const char *l = "";
-//    if (printLines)
-//        l = VLINE;
-
-//    inverseColorBg();
-//    int rowLen = 0;
-//    for (int i = 0; i < headerWidths.size(); i++) {
-//        cout << l << std::left << setw(headerWidths[i])
-//             << _model->headerData(i, Qt::Horizontal)
-//                    .toString()
-//                    .toLatin1()
-//                    .data();
-//        rowLen += headerWidths[i] + (printLines ? 1 : 0);
+//    if (m > lines && m - currentRow < lines) {
+//        from = m - lines;
+//        to = m;
 //    }
-//    cout << l;
-//    if (rowLen < width)
-//        for (int i = rowLen; i < width - (printLines ? 1 : 0); i++)
-//            cout << " ";
-//    restoreTxetColor();
-//    cout << endl;
 
     printRow(-1);
-    for (int i = from; i < to; i++)
-        printRow(i);
 
-//    if (printLines) {
-//        for (int i = 0; i < headerWidths.size(); i++) {
-//            for (int n = 0; n < headerWidths[i]; n++)
-//                cout << HLINE;
-//            cout << HLINE_TOP;
-//        }
-//    } else {
-//        for (int i = 0; i < width; i++)
-//            cout << HLINE;
-//    }
-//    cout << endl;
+    int scrollFrom = 0;
+    int scrollTo = lines;
+
+    if (m > lines) {
+        scrollFrom = from * lines / m;
+        scrollTo = scrollFrom + (lines * lines / m);
+    }
+    status = QString("%1/%2").arg(scrollFrom).arg(scrollTo);
+    for (int i = from; i < to; i++)
+        printRow(i, (i - from) <= scrollTo && (i - from) >= scrollFrom);
+
     printRow(-2);
+
+    int rowLen = 0;
+    QHashIterator<int, int> i(headerWidths);
+    while (i.hasNext()) {
+        i.next();
+        if (headerVisible[i.key()])
+            rowLen += i.value();
+    }
+
+    from = beginColumn * width / rowLen;
+    to = from + (width * width / rowLen);
+    for (int i = 0; i < width - 1; i++)
+        if (i >= from && i <= to)
+            cout << HBOX;
+        else
+            cout << HLINE;
+
+    cout << CORNER_BR << endl;
 
     printSummry();
     inverseColorBg();
     cout << status.toLatin1().data();
     for (int i = status.length(); i < width; i++)
         cout << " ";
+
+
     restoreTxetColor();
 }
 
@@ -380,7 +402,7 @@ void LogConsole::printType(QString t, bool printColon)
 //    cout << endl;
 //}
 
-void LogConsole::printRow(int row)
+void LogConsole::printRow(int row, bool scrollbar)
 {
     if (terminalMode) {
         QString t = _model->data(_model->index(row, 1)).toString();
@@ -398,10 +420,14 @@ void LogConsole::printRow(int row)
         l = (row == -2) ? HLINE_TOP : VLINE;
 
     int rowLen = 0;
-    if (beginRow == row || isHeader)
+
+    if (currentRow == row || isHeader)
         inverseColorBg();
 
     for (int i = 0; i < headerWidths.size(); i++) {
+        if (!headerVisible[i])
+            continue;
+
         skipped += headerWidths[i];
         if (skipped <= beginColumn)
             continue;
@@ -409,7 +435,7 @@ void LogConsole::printRow(int row)
         QString s = "";
 
         if(row == -1){
-            s = _model->headerData(i, Qt::Horizontal).toString();
+            s = QString::number(i) + "-" + _model->headerData(i, Qt::Horizontal).toString();
         } else if (row != -2){
             s = _model->data(_model->index(row, i, QModelIndex()),
                              Qt::DisplayRole).toString();
@@ -417,10 +443,10 @@ void LogConsole::printRow(int row)
 
         int fieldLen = headerWidths.value(i, 10);
 
-        if (rowLen + fieldLen > width - (printLines ? 1 : 0))
-            fieldLen = width - rowLen - (printLines ? 1 : 0);
+        if (rowLen + fieldLen > width - 1)
+            fieldLen = width - rowLen - 1;
 
-        if (skipped > beginColumn && skipped - fieldLen < beginColumn) {
+        if (skipped > beginColumn && skipped - fieldLen <= beginColumn) {
             s = s.remove(0, fieldLen - (skipped - beginColumn));
             fieldLen = skipped - beginColumn;
         } else {
@@ -430,7 +456,7 @@ void LogConsole::printRow(int row)
 
         cutText(s, fieldLen);
 
-        if (row >= 0 && beginRow != row && currentColumn == i)
+        if (row >= 0 && currentRow != row && currentColumn == i)
             setTextColor(Yellow, Black, true);
 
         if (row == -2)
@@ -439,20 +465,29 @@ void LogConsole::printRow(int row)
         else
             cout << std::left << setw(fieldLen) << s.toLatin1().data();
 
-        if (row >= 0 && beginRow != row && currentColumn == i)
+        if (row >= 0 && currentRow != row && currentColumn == i)
             restoreTxetColor();
 
-        rowLen += fieldLen + (printLines ? 1 : 0);
+        rowLen += fieldLen;
+        if (printLines)
+            rowLen++;
 
         if (rowLen >= width)
             break;
     }
 
-    if (beginRow == row || row < 0) {
-        if (rowLen < width)
-            for (int i = rowLen; i < width - (printLines ? 1 : 0); i++)
-                cout << (row == -2 ? HLINE : " ");
-        restoreTxetColor();
+    if (rowLen < width)
+        for (int i = rowLen; i < width - (printLines ? 0 : 1); i++)
+            cout << (row == -2 ? HLINE : " ");
+    restoreTxetColor();
+
+    if (row == -2) {
+        cout << "┤";
+    } else {
+        if(scrollbar)
+            cout << VBOX;
+        else
+            cout << VLINE;
     }
     cout << endl;
 }
@@ -463,7 +498,7 @@ void LogConsole::printSummry()
         clearScreen();
         //        inverseColorBg();
         inverseColorBg();
-        cout << setw(10) << (beginRow + 1) << " of " << setw(10)
+        cout << setw(10) << (currentRow + 1) << " of " << setw(10)
              << _model->rowCount() << endl;
         restoreTxetColor();
     }
@@ -475,7 +510,7 @@ void LogConsole::printSummry()
                     .toLatin1()
                     .data();
 
-        QString buffer = _model->data(_model->index(beginRow, i, QModelIndex()),
+        QString buffer = _model->data(_model->index(currentRow, i, QModelIndex()),
                                       Qt::DisplayRole).toString();
         if (!summryMode)
             cutText(buffer, width - 10);
@@ -507,6 +542,11 @@ void LogConsole::clearScreen()
 {
     cout << "\033[1;1H"
          << "\033[J";
+}
+
+void LogConsole::setUnderline()
+{
+    cout << "\033[4m";
 }
 
 void LogConsole::moveCursor(int x, int y)
@@ -582,6 +622,19 @@ void CinReader::run()
 
         case 90:
             emit tabPressed(true);
+            break;
+
+        case 48:
+        case 49:
+        case 50:
+        case 51:
+        case 52:
+        case 53:
+        case 54:
+        case 55:
+        case 56:
+        case 57:
+            emit numPressed(i - 48);
             break;
 
         default:

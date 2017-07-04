@@ -26,22 +26,30 @@ signals:
     void minusPressed();
     void returnPressed();
     void tabPressed(bool shift);
+    void numPressed(const int &num);
 };
 
 class LogConsole : public QObject
 {
     Q_OBJECT
     Logger *_model;
+
+    int currentRow;
     int beginRow;
-    int beginColumn;
     int lines;
-    QHash<int, int> headerWidths;
+
+    int beginColumn;
     int currentColumn;
+
+    int width;
+    int height;
+
+    QHash<int, int> headerWidths;
+    QHash<int, bool> headerVisible;
     CinReader *reader;
     bool summryMode;
     bool terminalMode;
-    int width;
-    int height;
+
     QString status;
     bool printLines;
 
@@ -63,11 +71,12 @@ public:
 
 private:
     void printScreen();
-    void printRow(int row);
+    void printRow(int row, bool scrollbar = false);
     void printSummry();
     QString fill(const char *s, int len);
     void cutText(QString &s, int len);
     void clearScreen();
+    void setUnderline();
     void moveCursor(int x, int y);
     void setTextColor(Color text, Color bg = Black, bool bright = true);
     void restoreTxetColor();

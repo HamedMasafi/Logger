@@ -208,7 +208,7 @@ void Logger::log(const char *fileName, const char *function, int lineNumber,
     endInsertRows();
 }
 
-void Logger::init()
+void Logger::init(Flag f)
 {
     qInstallMessageHandler(messageOutput);
 #ifdef QT_WIDGETS_LIB
@@ -238,4 +238,6 @@ QString Logger::typeText(QtMsgType type) const
     case QtFatalMsg:
         return "Fatal";
     }
+
+    return "";
 }
