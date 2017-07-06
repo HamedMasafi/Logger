@@ -27,6 +27,7 @@ using namespace std;
 #define VLINE "│"
 #define HLINE "―"
 #define HLINE_TOP "┴"
+#define VLINE_LEFT "┤"
 #define CORNER_BL "└"
 #define CORNER_BR "┘"
 #define HBOX "\u25AC"
@@ -280,10 +281,6 @@ void LogConsole::printScreen()
     int from = beginRow;
     int to = from + lines;
     int m = _model->rowCount();
-//    if (m > lines && m - currentRow < lines) {
-//        from = m - lines;
-//        to = m;
-//    }
 
     printRow(-1);
 
@@ -294,7 +291,7 @@ void LogConsole::printScreen()
         scrollFrom = from * lines / m;
         scrollTo = scrollFrom + (lines * lines / m);
     }
-    status = QString("%1/%2").arg(scrollFrom).arg(scrollTo);
+
     for (int i = from; i < to; i++)
         printRow(i, (i - from) <= scrollTo && (i - from) >= scrollFrom);
 
@@ -347,60 +344,6 @@ void LogConsole::printType(QString t, bool printColon)
             cout << ": ";
     restoreTxetColor();
 }
-
-//void LogConsole::printRow(int row)
-//{
-//    if (terminalMode) {
-//        QString t = _model->data(_model->index(row, 1)).toString();
-
-//        printType(t);
-
-//        cout << L(_model->data(_model->index(row, 2))) << endl;
-//        return;
-//    }
-//    const char *l = "";
-//    if (printLines)
-//        l = VLINE;
-
-//    int rowLen = 0;
-//    if (beginRow == row)
-//        inverseColorBg();
-
-//    for (int i = 0; i < headerWidths.size(); i++) {
-//        QString s = _model->data(_model->index(row, i, QModelIndex()),
-//                                 Qt::DisplayRole).toString();
-
-//        int fieldLen = headerWidths.value(i, 10);
-
-//        if (rowLen + fieldLen > width - (printLines ? 1 : 0))
-//            fieldLen = width - rowLen - (printLines ? 1 : 0);
-
-//        cutText(s, fieldLen);
-
-//        cout << l;
-//        if (beginRow != row && currentColumn == i)
-//            setTextColor(Yellow, Black, true);
-
-//        cout << std::left << setw(fieldLen) << s.toLatin1().data();
-
-//        if (beginRow != row && currentColumn == i)
-//            restoreTxetColor();
-
-//        rowLen += fieldLen + (printLines ? 1 : 0);
-
-//        if (rowLen >= width)
-//            break;
-//    }
-
-//    cout << l;
-//    if (beginRow == row) {
-//        if (rowLen < width)
-//            for (int i = rowLen; i < width - (printLines ? 1 : 0); i++)
-//                cout << " ";
-//        restoreTxetColor();
-//    }
-//    cout << endl;
-//}
 
 void LogConsole::printRow(int row, bool scrollbar)
 {
@@ -482,7 +425,7 @@ void LogConsole::printRow(int row, bool scrollbar)
     restoreTxetColor();
 
     if (row == -2) {
-        cout << "┤";
+        cout << VLINE_LEFT;
     } else {
         if(scrollbar)
             cout << VBOX;
