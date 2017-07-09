@@ -6,9 +6,9 @@
 #include <iostream>
 
 #ifdef QT_WIDGETS_LIB
-#   include "showlogdialog.h"
+#include "showlogdialog.h"
 #else
-#   include "logconsole.h"
+#include "logconsole.h"
 #endif
 
 #include "logger.h"
@@ -29,7 +29,8 @@ void messageOutput(QtMsgType type, const QMessageLogContext &context,
 
 Logger::Logger(QObject *parent) : QAbstractTableModel(parent)
 {
-    logFile = new QFile(QDateTime::currentDateTime().toString("ddMMdd-hhmmss.log"));
+    logFile
+        = new QFile(QDateTime::currentDateTime().toString("ddMMdd-hhmmss.log"));
     logFile->open(QIODevice::WriteOnly | QIODevice::Text);
     stream = new QTextStream(logFile);
 }
@@ -185,39 +186,44 @@ void Logger::log(const char *fileName, const char *function, int lineNumber,
     dataList.append(l);
 
     *stream << dataList.count() << " "
-            << "[" << typeText(type) << "] "
-            << s
-            << endl;
+            << "[" << typeText(type) << "] " << s << endl;
 
-//    switch (l->type) {
-//    case QtDebugMsg:
-//        qDebug("%s", l->title.toLocal8Bit().data());
-//        break;
-//    case QtInfoMsg:
-//        qInfo("%s", l->title.toLocal8Bit().data());
-//        break;
-//    case QtWarningMsg:
-//        qWarning("%s", l->title.toLocal8Bit().data());
-//        break;
-//    case QtCriticalMsg:
-//        qCritical("%s", l->title.toLocal8Bit().data());
-//        break;
-//    case QtFatalMsg:
-//        qFatal("%s", l->title.toLocal8Bit().data());
-//    }
+    if (redirectMessages)
+        switch (l->type) {
+        case QtDebugMsg:
+            qDebug("%s", l->title.toLocal8Bit().data());
+            break;
+        case QtInfoMsg:
+            qInfo("%s", l->title.toLocal8Bit().data());
+            break;
+        case QtWarningMsg:
+            qWarning("%s", l->title.toLocal8Bit().data());
+            break;
+        case QtCriticalMsg:
+            qCritical("%s", l->title.toLocal8Bit().data());
+            break;
+        case QtFatalMsg:
+            qFatal("%s", l->title.toLocal8Bit().data());
+        }
     endInsertRows();
 }
 
 void Logger::init(Flag f)
 {
     qInstallMessageHandler(messageOutput);
+
+    if (f & LogTableView) {
+        redirectMessages = false;
 #ifdef QT_WIDGETS_LIB
-    showLogDialog *dialog = new showLogDialog;
-    dialog->show();
+        showLogDialog *dialog = new showLogDialog;
+        dialog->show();
 #else
-    LogConsole *c = new LogConsole(this);
-    Q_UNUSED(c);
+        LogConsole *c = new LogConsole(this);
+        Q_UNUSED(c);
 #endif
+    } else {
+        redirectMessages = true;
+    }
 }
 
 QString Logger::typeText(QtMsgType type) const

@@ -22,11 +22,15 @@ class Logger : public QAbstractTableModel
     Q_OBJECT
     QFile *logFile;
     QTextStream *stream;
+    bool redirectMessages;
 
 public:
     enum Flag{
-        TerminalLines = 1,
-        TerminalMode = 2
+        None = 0,
+
+        LogTableView = 1,
+        TerminalLines = 2,
+        TerminalMode = 4
     };
     Q_FLAG(Flag)
 
@@ -65,7 +69,7 @@ public:
              QVariant val8 = QVariant(),
              QVariant val9 = QVariant());
 
-    void init(Flag f = TerminalLines);
+    void init(Flag f = None);
 
 private:
     struct LogData{
