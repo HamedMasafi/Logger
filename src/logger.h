@@ -32,7 +32,7 @@ public:
         TerminalLines = 2,
         TerminalMode = 4
     };
-    Q_FLAG(Flag)
+    Q_DECLARE_FLAGS(Flags, Flag)
 
     Logger(QObject *parent = 0);
 
@@ -69,7 +69,7 @@ public:
              QVariant val8 = QVariant(),
              QVariant val9 = QVariant());
 
-    void init(Flag f = None);
+    void init(Logger::Flags f = None);
 
 private:
     struct LogData{
@@ -84,5 +84,7 @@ private:
     QList<LogData*> dataList;
     QString typeText(QtMsgType type) const;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Logger::Flags)
 
 #endif // LOGGER_H

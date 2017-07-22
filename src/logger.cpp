@@ -208,7 +208,7 @@ void Logger::log(const char *fileName, const char *function, int lineNumber,
     endInsertRows();
 }
 
-void Logger::init(Flag f)
+void Logger::init(Flags f)
 {
     qInstallMessageHandler(messageOutput);
 
@@ -219,7 +219,8 @@ void Logger::init(Flag f)
         dialog->show();
 #else
         LogConsole *c = new LogConsole(this);
-        Q_UNUSED(c);
+        c->setTerminalMode(f & TerminalMode);
+        c->start();
 #endif
     } else {
         redirectMessages = true;

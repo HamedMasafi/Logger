@@ -41,7 +41,21 @@ void resizeHandler(int sig)
         c->screenSizeChanged();
 }
 
-LogConsole::LogConsole(QObject *parent) : QObject(parent)
+bool LogConsole::terminalMode() const
+{
+    return _terminalMode;
+}
+
+void LogConsole::setTerminalMode(bool terminalMode)
+{
+    _terminalMode = terminalMode;
+}
+
+LogConsole::LogConsole(QObject *parent) : QObject(parent), _terminalMode(false)
+{
+}
+
+void LogConsole::start()
 {
     beginRow = 0;
     beginColumn = 0;
@@ -80,7 +94,7 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
         Q_UNUSED(parent);
         Q_UNUSED(last);
 
-        if (terminalMode) {
+        if (_terminalMode) {
             for (int i = first; i < last; i++)
                 this->printRow(i);
         } else {
@@ -104,10 +118,10 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
     currentColumn = -1;
 
     CinReader *reader = new CinReader;
-    summryMode = terminalMode = false;
+    summryMode = false;
 
     connect(reader, &CinReader::upPressed, [&]() {
-        if(terminalMode)
+        if(_terminalMode)
             return;
 
         if (currentRow > 0) {
@@ -121,7 +135,7 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
         }
     });
     connect(reader, &CinReader::downPressed, [&]() {
-        if(terminalMode)
+        if(_terminalMode)
             return;
 
         if (currentRow < _model->rowCount() - 1) {
@@ -136,7 +150,7 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
     });
 
     connect(reader, &CinReader::leftPressed, [=]() {
-        if(terminalMode)
+        if(_terminalMode)
             return;
 
         if (beginColumn > 0) {
@@ -145,7 +159,7 @@ LogConsole::LogConsole(QObject *parent) : QObject(parent)
         }
     });
     connect(reader, &CinReader::rightPressed, [=]() {
-        if(terminalMode)
+        if(_terminalMode)
             return;
 int rowLen = 0;
         QHashIterator<int, int> i(headerWidths);
@@ -173,7 +187,7 @@ int rowLen = 0;
     });
 
     connect(reader, &CinReader::plusPressed, [=]() {
-        if(terminalMode)
+        if(_terminalMode)
             return;
 
 //        int sum = 0;
@@ -190,7 +204,7 @@ int rowLen = 0;
         }
     });
     connect(reader, &CinReader::minusPressed, [=]() {
-        if(terminalMode)
+        if(_terminalMode)
             return;
 
         if (currentColumn >= 0 && currentColumn < _model->columnCount() - 1 && headerWidths[currentColumn] > 0) {
@@ -217,9 +231,9 @@ int rowLen = 0;
             headerWidths[0] = 0;
         }
         if (n == 't') {
-            terminalMode = !terminalMode;
+            _terminalMode = !_terminalMode;
             this->clearScreen();
-            if (terminalMode) {
+            if (_terminalMode) {
                 int from = 0;
                 if (_model->rowCount() > lines)
                     from = _model->rowCount() - lines;
@@ -232,7 +246,7 @@ int rowLen = 0;
     });
 
     connect(reader, &CinReader::returnPressed, [=]() {
-        if (terminalMode)
+        if (_terminalMode)
             return;
         summryMode = !summryMode;
         if (summryMode)
@@ -275,7 +289,7 @@ void LogConsole::screenSizeChanged()
 void LogConsole::printScreen()
 {
     clearScreen();
-    if (terminalMode)
+    if (_terminalMode)
         return;
 
     int from = beginRow;
@@ -347,7 +361,7 @@ void LogConsole::printType(QString t, bool printColon)
 
 void LogConsole::printRow(int row, bool scrollbar)
 {
-    if (terminalMode) {
+    if (_terminalMode) {
         QString t = _model->data(_model->index(row, 1)).toString();
 
         printType(t);

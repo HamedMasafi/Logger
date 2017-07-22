@@ -48,7 +48,7 @@ class LogConsole : public QObject
     QHash<int, bool> headerVisible;
     CinReader *reader;
     bool summryMode;
-    bool terminalMode;
+    bool _terminalMode;
 
     QString status;
     bool printLines;
@@ -68,6 +68,10 @@ public:
     explicit LogConsole(QObject *parent = nullptr);
     virtual ~LogConsole();
     void screenSizeChanged();
+
+    void start();
+    bool terminalMode() const;
+    void setTerminalMode(bool terminalMode);
 
 private:
     void printScreen();
