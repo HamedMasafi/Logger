@@ -288,6 +288,8 @@ void LogConsole::screenSizeChanged()
 
 void LogConsole::printScreen()
 {
+    std::cout << std::nounitbuf;
+
     clearScreen();
     if (_terminalMode)
         return;
@@ -335,6 +337,7 @@ void LogConsole::printScreen()
     for (int i = status.length(); i < width; i++)
         cout << " ";
 
+    cout << std::flush;
 
     restoreTxetColor();
 }
