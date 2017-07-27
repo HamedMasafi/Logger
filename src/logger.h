@@ -10,6 +10,7 @@
 #define K_LOG(type, ...) Logger::instance()->log(__FILE__, __FUNCTION__, __LINE__, type, __VA_ARGS__)
 
 #define K_TRACE(...)        Logger::instance()->log(__FILE__, __FUNCTION__, __LINE__, QtDebugMsg, __VA_ARGS__)
+#define K_DEBUG(...)        Logger::instance()->log(__FILE__, __FUNCTION__, __LINE__, QtDebugMsg, __VA_ARGS__)
 #define K_INFORMATION(...)  Logger::instance()->log(__FILE__, __FUNCTION__, __LINE__, QtInfoMsg, __VA_ARGS__)
 #define K_WARNING(...)      Logger::instance()->log(__FILE__, __FUNCTION__, __LINE__, QtWarningMsg, __VA_ARGS__)
 #define K_ERROR(...)        Logger::instance()->log(__FILE__, __FUNCTION__, __LINE__, QtCriticalMsg, __VA_ARGS__)

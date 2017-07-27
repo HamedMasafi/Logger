@@ -327,7 +327,7 @@ void LogConsole::printScreen()
         else
             cout << HLINE;
 
-    cout << CORNER_BR << endl;
+    cout << CORNER_BR << "\n";
 
     printSummry();
     inverseColorBg();
@@ -366,7 +366,7 @@ void LogConsole::printRow(int row, bool scrollbar)
 
         printType(t);
 
-        cout << L(_model->data(_model->index(row, 2))) << endl;
+        cout << L(_model->data(_model->index(row, 2))) << "\n";
         return;
     }
 
@@ -446,7 +446,7 @@ void LogConsole::printRow(int row, bool scrollbar)
         else
             cout << VLINE;
     }
-    cout << endl;
+    cout << "\n";
 }
 
 void LogConsole::printSummry()
@@ -456,7 +456,7 @@ void LogConsole::printSummry()
         //        inverseColorBg();
         inverseColorBg();
         cout << setw(10) << (currentRow + 1) << " of " << setw(10)
-             << _model->rowCount() << endl;
+             << _model->rowCount() << "\n";
         restoreTxetColor();
     }
 
@@ -477,8 +477,9 @@ void LogConsole::printSummry()
         else
             cout << buffer.toLatin1().data();
 
-        cout << endl;
+        cout << "\n";
     }
+    cout << endl;
 }
 
 QString LogConsole::fill(const char *s, int len)
@@ -595,7 +596,7 @@ void CinReader::run()
             break;
 
         default:
-//            cout << i << endl;
+//            cout << i << "\n";
             emit keyPressed(i);
         }
     }
