@@ -454,6 +454,8 @@ void LogConsole::printRow(int row, bool scrollbar)
 
 void LogConsole::printSummry()
 {
+    cout << nounitbuf;
+
     if (summryMode) {
         clearScreen();
         //        inverseColorBg();
@@ -482,7 +484,7 @@ void LogConsole::printSummry()
 
         cout << "\n";
     }
-    cout << endl;
+    cout << flush;
 }
 
 QString LogConsole::fill(const char *s, int len)
