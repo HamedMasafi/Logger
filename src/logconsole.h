@@ -76,7 +76,7 @@ public:
 private:
     void printScreen();
     void printRow(int row, bool scrollbar = false);
-    void printSummry();
+    void printSummry(bool buffering = true);
     QString fill(const char *s, int len);
     void cutText(QString &s, int len);
     void clearScreen();
