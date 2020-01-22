@@ -106,6 +106,17 @@ QVariant Logger::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
+Logger::LogData *Logger::logData(const QModelIndex &index) const
+{
+    if (!index.isValid())
+        return nullptr;
+
+    if (index.row() >= dataList.size() || index.row() < 0)
+        return nullptr;
+
+    return dataList.at(index.row());
+}
+
 bool Logger::insertRows(int row, int count, const QModelIndex &parent)
 {
     beginInsertRows(parent, row, row + count - 1);
@@ -215,7 +226,7 @@ void Logger::init(Flags f)
     if (f & LogTableView) {
         redirectMessages = false;
 #ifdef QT_WIDGETS_LIB
-        showLogDialog *dialog = new showLogDialog;
+        ShowLogDialog *dialog = new ShowLogDialog;
         dialog->show();
 #else
         LogConsole *c = new LogConsole(this);

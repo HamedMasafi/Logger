@@ -35,6 +35,16 @@ public:
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
+    struct LogData{
+        int id;
+        QtMsgType type;
+        QString title;
+        QString body;
+        QString file;
+        QString function;
+        int line;
+    };
+
     Logger(QObject *parent = 0);
 
     // Header:
@@ -45,6 +55,7 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    LogData *logData(const QModelIndex &index) const;
 
     // Add data:
     bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
@@ -72,18 +83,10 @@ public:
 
     void init(Logger::Flags f = None);
 
-private:
-    struct LogData{
-        int id;
-        QtMsgType type;
-        QString title;
-        QString body;
-        QString file;
-        QString function;
-        int line;
-    };
-    QList<LogData*> dataList;
+
     QString typeText(QtMsgType type) const;
+private:
+    QList<LogData*> dataList;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Logger::Flags)
