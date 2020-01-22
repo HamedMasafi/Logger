@@ -102,6 +102,7 @@ void ObjectProfiller::timerEvent(QTimerEvent *event)
 
 bool ObjectProfiller::isValidPointer(void *ptr)
 {
+#ifndef Q_OS_WINDOWS
     if ((((ulong)ptr)&7) == 7)
         return false; //Not valid address at all (Maybe random pointer?)
     char _prefix;
@@ -118,5 +119,6 @@ bool ObjectProfiller::isValidPointer(void *ptr)
         return false; //Deleted :(
         break;
     }
+#endif
     return true; //Still alive!
 }

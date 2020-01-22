@@ -8,7 +8,9 @@
 #ifdef QT_WIDGETS_LIB
 #include "showlogdialog.h"
 #else
-#include "logconsole.h"
+#   ifndef LOGGER_NO_CONSOLE
+#       include "logconsole.h"
+#   endif
 #endif
 
 #include "logger.h"
@@ -229,9 +231,11 @@ void Logger::init(Flags f)
         ShowLogDialog *dialog = new ShowLogDialog;
         dialog->show();
 #else
+#   ifndef LOGGER_NO_CONSOLE
         LogConsole *c = new LogConsole(this);
         c->setTerminalMode(f & TerminalMode);
         c->start();
+#   endif
 #endif
     } else {
         redirectMessages = true;
