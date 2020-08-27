@@ -7,7 +7,7 @@
 #include <QHash>
 #include <QThread>
 
-class Logger;
+class LogModel;
 class CinReader : public QThread
 {
     Q_OBJECT
@@ -32,7 +32,7 @@ signals:
 class LogConsole : public QObject
 {
     Q_OBJECT
-    Logger *_model;
+    LogModel *_model;
 
     int currentRow;
     int beginRow;

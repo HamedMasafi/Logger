@@ -18,12 +18,13 @@
 class LogModel;
 class QFile;
 class QTextStream;
-class Logger : public QAbstractTableModel
+class Logger : public QObject
 {
     Q_OBJECT
     QFile *logFile;
     QTextStream *stream;
     bool redirectMessages;
+    LogModel *_model;
 
 public:
     enum Flag{
@@ -35,36 +36,7 @@ public:
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
-    struct LogData{
-        int id;
-        QtMsgType type;
-        QString title;
-        QString body;
-        QString file;
-        QString function;
-        int line;
-    };
-
     Logger(QObject *parent = 0);
-
-    // Header:
-    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-
-    // Basic functionality:
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-    int columnCount(const QModelIndex &parent = QModelIndex()) const override;
-
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
-    LogData *logData(const QModelIndex &index) const;
-
-    // Add data:
-    bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
-    bool insertColumns(int column, int count, const QModelIndex &parent = QModelIndex()) override;
-
-    // Remove data:
-    bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
-    bool removeColumns(int column, int count, const QModelIndex &parent = QModelIndex()) override;
-
 
     static Logger *instance();
     void log(const char *fileName, const char *function, int lineNumber,
@@ -82,11 +54,7 @@ public:
              QVariant val9 = QVariant());
 
     void init(Logger::Flags f = None);
-
-
-    QString typeText(QtMsgType type) const;
-private:
-    QList<LogData*> dataList;
+    LogModel *model() const;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Logger::Flags)

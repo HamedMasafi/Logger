@@ -8,17 +8,18 @@ class LogModel : public QAbstractTableModel
 {
     Q_OBJECT
 
-    struct LogData{
+public:
+    struct LogData {
         int id;
-        int type;
+        QtMsgType type;
+        QString title;
         QString body;
         QString file;
         QString function;
         int line;
-    };
-    QList<LogData*> dataList;
 
-public:
+        QString typeString() const;
+    };
     explicit LogModel(QObject *parent = 0);
 
     // Header:
@@ -28,17 +29,15 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    QVariant data(const QModelIndex &index,
+                  int role = Qt::DisplayRole) const override;
 
-    // Add data:
-    bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
-    bool insertColumns(int column, int count, const QModelIndex &parent = QModelIndex()) override;
-
-    // Remove data:
-    bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
-    bool removeColumns(int column, int count, const QModelIndex &parent = QModelIndex()) override;
+    void append(LogData *row);
+    LogData *row(const QModelIndex &index) const;
 
 private:
+
+    QList<LogData*> dataList;
 };
 
 #endif // LOGMODEL_H

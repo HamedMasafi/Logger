@@ -14,7 +14,7 @@ ShowLogDialog::ShowLogDialog(QWidget *parent) :
 
     proxyModel = new QSortFilterProxyModel(this);
 
-    proxyModel->setSourceModel(Logger::instance());
+    proxyModel->setSourceModel(Logger::instance()->model());
     treeView->setModel(proxyModel);
 
     proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
@@ -42,12 +42,12 @@ void ShowLogDialog::on_lineEdit_textChanged(const QString &s)
 void ShowLogDialog::on_treeView_clicked(const QModelIndex &index)
 {
     auto i = proxyModel->mapToSource(index);
-    Logger::LogData *data = Logger::instance()->logData(i);
+    auto data = Logger::instance()->model()->row(i);
 
     if (!data)
         return;
 
-    labelType->setText(Logger::instance()->typeText(data->type));
+    labelType->setText(data->typeString());
     labelTitle->setText(data->title);
     labelBody->setText(data->body);
     labelFile->setText(data->file);

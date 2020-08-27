@@ -14,13 +14,7 @@
 #endif
 
 #include "logger.h"
-
-#define COL_ID 0
-#define COL_Type 1
-#define COL_TITLE 2
-#define COL_File 3
-#define COL_Function 4
-#define COL_Line 5
+#include "logmodel.h"
 
 void messageOutput(QtMsgType type, const QMessageLogContext &context,
                    const QString &msg)
@@ -29,122 +23,18 @@ void messageOutput(QtMsgType type, const QMessageLogContext &context,
                             msg.toLocal8Bit().data());
 }
 
-Logger::Logger(QObject *parent) : QAbstractTableModel(parent)
+LogModel *Logger::model() const
 {
+    return _model;
+}
+
+Logger::Logger(QObject *parent) : QObject(parent)
+{
+    _model = new LogModel(this);
     logFile
         = new QFile(QDateTime::currentDateTime().toString("ddMMdd-hhmmss.log"));
     logFile->open(QIODevice::WriteOnly | QIODevice::Text);
     stream = new QTextStream(logFile);
-}
-
-QVariant Logger::headerData(int section, Qt::Orientation orientation,
-                            int role) const
-{
-    if (role != Qt::DisplayRole)
-        return QVariant();
-
-    if (orientation == Qt::Horizontal) {
-        switch (section) {
-        case COL_ID:
-            return tr("ID");
-        case COL_Type:
-            return tr("Type");
-        case COL_TITLE:
-            return tr("Message");
-        case COL_File:
-            return tr("File");
-        case COL_Function:
-            return tr("Function");
-        case COL_Line:
-            return tr("Line");
-        }
-    }
-    return QVariant();
-}
-
-int Logger::rowCount(const QModelIndex &parent) const
-{
-    //    if (!parent.isValid())
-    //        return 0;
-
-    return dataList.count();
-}
-
-int Logger::columnCount(const QModelIndex &parent) const
-{
-    //    if (!parent.isValid())
-    //        return 0;
-
-    return 6;
-}
-
-QVariant Logger::data(const QModelIndex &index, int role) const
-{
-    if (!index.isValid())
-        return QVariant();
-
-    if (index.row() >= dataList.size() || index.row() < 0)
-        return QVariant("-");
-
-    if (role == Qt::DisplayRole) {
-        LogData *d = dataList.at(index.row());
-
-        switch (index.column()) {
-        case COL_ID:
-            return index.row() + 1;
-        case COL_Type: {
-            return typeText(d->type);
-        }
-        case COL_TITLE:
-            return d->title;
-        case COL_File:
-            return d->file;
-        case COL_Function:
-            return d->function;
-        case COL_Line:
-            return d->line;
-        }
-    }
-    return QVariant();
-}
-
-Logger::LogData *Logger::logData(const QModelIndex &index) const
-{
-    if (!index.isValid())
-        return nullptr;
-
-    if (index.row() >= dataList.size() || index.row() < 0)
-        return nullptr;
-
-    return dataList.at(index.row());
-}
-
-bool Logger::insertRows(int row, int count, const QModelIndex &parent)
-{
-    beginInsertRows(parent, row, row + count - 1);
-    // FIXME: Implement me!
-    endInsertRows();
-}
-
-bool Logger::insertColumns(int column, int count, const QModelIndex &parent)
-{
-    beginInsertColumns(parent, column, column + count - 1);
-    // FIXME: Implement me!
-    endInsertColumns();
-}
-
-bool Logger::removeRows(int row, int count, const QModelIndex &parent)
-{
-    beginRemoveRows(parent, row, row + count - 1);
-    // FIXME: Implement me!
-    endRemoveRows();
-}
-
-bool Logger::removeColumns(int column, int count, const QModelIndex &parent)
-{
-    beginRemoveColumns(parent, column, column + count - 1);
-    // FIXME: Implement me!
-    endRemoveColumns();
 }
 
 Logger *Logger::instance()
@@ -186,20 +76,18 @@ void Logger::log(const char *fileName, const char *function, int lineNumber,
     if (val9 != QVariant())
         s = s.arg(val9.toString());
 
-    beginInsertRows(QModelIndex(), dataList.count(), dataList.count() + 1);
-
-    LogData *l = new LogData;
-    l->id = dataList.count();
+    auto l = new LogModel::LogData;
+    l->id = _model->rowCount(QModelIndex()) + 1;
     l->type = type;
     l->file = fileName;
     l->function = function;
     l->line = lineNumber;
     l->title = s;
-    l->body = QString::null;
-    dataList.append(l);
+    l->body = QString();
+    _model->append(l);
 
-    *stream << dataList.count() << " "
-            << "[" << typeText(type) << "] " << s << endl;
+    *stream << l->id << " "
+            << "[" << l->typeString() << "] " << s << Qt::endl;
 
     if (redirectMessages)
         switch (l->type) {
@@ -218,7 +106,6 @@ void Logger::log(const char *fileName, const char *function, int lineNumber,
         case QtFatalMsg:
             qFatal("%s", l->title.toLocal8Bit().data());
         }
-    endInsertRows();
 }
 
 void Logger::init(Flags f)
@@ -242,24 +129,3 @@ void Logger::init(Flags f)
     }
 }
 
-QString Logger::typeText(QtMsgType type) const
-{
-    switch (type) {
-    case QtDebugMsg:
-        return "Debug";
-        break;
-    case QtInfoMsg:
-        return "Info";
-        break;
-    case QtWarningMsg:
-        return "Warning";
-        break;
-    case QtCriticalMsg:
-        return "Error";
-        break;
-    case QtFatalMsg:
-        return "Fatal";
-    }
-
-    return "";
-}

@@ -13,6 +13,7 @@
 #include <QDataStream>
 #include <signal.h>
 #include <QtMath>
+#include "logmodel.h"
 
 using namespace std;
 
@@ -63,7 +64,7 @@ void LogConsole::start()
     status = "t=Terminal mode    Enter=Show details    +/-=Change column size  "
              " 0-5=Show/Hide columns";
     instances.append(this);
-    _model = Logger::instance();
+    _model = Logger::instance()->model();
     for (int i = 0; i < _model->columnCount(); i++) {
         headerWidths.insert(i, 10);
         headerVisible.insert(i, true);

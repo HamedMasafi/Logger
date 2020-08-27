@@ -1,5 +1,12 @@
 #include "logmodel.h"
 
+#define COL_ID 0
+#define COL_Type 1
+#define COL_TITLE 2
+#define COL_File 3
+#define COL_Function 4
+#define COL_Line 5
+
 /*
  * Headers:
  *  1: id
@@ -21,17 +28,17 @@ QVariant LogModel::headerData(int section, Qt::Orientation orientation, int role
 
     if (orientation == Qt::Horizontal) {
         switch (section) {
-        case 0:
+        case COL_ID:
             return tr("ID");
-        case 1:
+        case COL_Type:
             return tr("Type");
-        case 2:
-            return tr("Body");
-        case 3:
+        case COL_TITLE:
+            return tr("Message");
+        case COL_File:
             return tr("File");
-        case 4:
+        case COL_Function:
             return tr("Function");
-        case 5:
+        case COL_Line:
             return tr("Line");
         }
     }
@@ -43,7 +50,7 @@ int LogModel::rowCount(const QModelIndex &parent) const
 //    if (!parent.isValid())
 //        return 0;
 
-    return dataList.count() + 10;
+    return dataList.count();
 }
 
 int LogModel::columnCount(const QModelIndex &parent) const
@@ -59,43 +66,66 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
     if (!index.isValid())
         return QVariant();
 
-//    if (index.row() >= dataList.size() || index.row() < 0)
-//        return QVariant();
+    if (index.row() >= dataList.size() || index.row() < 0)
+        return QVariant("-");
 
     if (role == Qt::DisplayRole) {
+        LogData *d = dataList.at(index.row());
 
-        if (index.column() == 0)
-            return "pair.first";
-        else if (index.column() == 1)
-            return "pair.second";
+        switch (index.column()) {
+        case COL_ID:
+            return index.row() + 1;
+        case COL_Type:
+            return d->typeString();
+        case COL_TITLE:
+            return d->title;
+        case COL_File:
+            return d->file;
+        case COL_Function:
+            return d->function;
+        case COL_Line:
+            return d->line;
+        }
     }
     return QVariant();
 }
 
-bool LogModel::insertRows(int row, int count, const QModelIndex &parent)
+void LogModel::append(LogModel::LogData *row)
 {
-    beginInsertRows(parent, row, row + count - 1);
-    // FIXME: Implement me!
+    beginInsertRows(QModelIndex(), dataList.count(), dataList.count());
+    dataList.append(row);
     endInsertRows();
 }
 
-bool LogModel::insertColumns(int column, int count, const QModelIndex &parent)
+LogModel::LogData *LogModel::row(const QModelIndex &index) const
 {
-    beginInsertColumns(parent, column, column + count - 1);
-    // FIXME: Implement me!
-    endInsertColumns();
+    if (!index.isValid())
+        return nullptr;
+
+    if (index.row() >= dataList.size() || index.row() < 0)
+        return nullptr;
+
+    return dataList.at(index.row());
 }
 
-bool LogModel::removeRows(int row, int count, const QModelIndex &parent)
+QString LogModel::LogData::typeString() const
 {
-    beginRemoveRows(parent, row, row + count - 1);
-    // FIXME: Implement me!
-    endRemoveRows();
-}
+    switch (type) {
+    case QtDebugMsg:
+        return "Debug";
+        break;
+    case QtInfoMsg:
+        return "Info";
+        break;
+    case QtWarningMsg:
+        return "Warning";
+        break;
+    case QtCriticalMsg:
+        return "Error";
+        break;
+    case QtFatalMsg:
+        return "Fatal";
+    }
 
-bool LogModel::removeColumns(int column, int count, const QModelIndex &parent)
-{
-    beginRemoveColumns(parent, column, column + count - 1);
-    // FIXME: Implement me!
-    endRemoveColumns();
+    return "";
 }
