@@ -4,6 +4,7 @@
 #include <QDateTime>
 #include <QMetaMethod>
 #include <iostream>
+#include <QApplication>
 
 #ifdef QT_WIDGETS_LIB
 #include "showlogdialog.h"
@@ -30,11 +31,6 @@ LogModel *Logger::model() const
 
 Logger::Logger(QObject *parent) : QObject(parent)
 {
-    _model = new LogModel(this);
-    logFile
-        = new QFile(QDateTime::currentDateTime().toString("ddMMdd-hhmmss.log"));
-    logFile->open(QIODevice::WriteOnly | QIODevice::Text);
-    stream = new QTextStream(logFile);
 }
 
 Logger *Logger::instance()
@@ -108,9 +104,19 @@ void Logger::log(const char *fileName, const char *function, int lineNumber,
         }
 }
 
-void Logger::init(Flags f)
+void Logger::init(Flags f, const QString &path)
 {
+    if (path == QString())
+        _path = qApp->applicationDirPath();
+    else
+        _path = path;
     qInstallMessageHandler(messageOutput);
+
+    _model = new LogModel(this);
+    logFile
+        = new QFile(_path + "/" + QDateTime::currentDateTime().toString("ddMMdd-hhmmss.log"));
+    logFile->open(QIODevice::WriteOnly | QIODevice::Text);
+    stream = new QTextStream(logFile);
 
     if (f & LogTableView) {
         redirectMessages = false;

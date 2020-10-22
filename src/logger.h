@@ -25,6 +25,7 @@ class Logger : public QObject
     QTextStream *stream;
     bool redirectMessages;
     LogModel *_model;
+    QString _path;
 
 public:
     enum Flag{
@@ -53,7 +54,7 @@ public:
              QVariant val8 = QVariant(),
              QVariant val9 = QVariant());
 
-    void init(Logger::Flags f = None);
+    void init(Logger::Flags f = None, const QString &path = QString());
     LogModel *model() const;
 };
 
