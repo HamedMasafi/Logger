@@ -31,6 +31,7 @@ LogModel *Logger::model() const
 
 Logger::Logger(QObject *parent) : QObject(parent)
 {
+    _model = new LogModel(this);
 }
 
 Logger *Logger::instance()
@@ -112,7 +113,6 @@ void Logger::init(Flags f, const QString &path)
         _path = path;
     qInstallMessageHandler(messageOutput);
 
-    _model = new LogModel(this);
     logFile
         = new QFile(_path + "/" + QDateTime::currentDateTime().toString("ddMMdd-hhmmss.log"));
     logFile->open(QIODevice::WriteOnly | QIODevice::Text);
