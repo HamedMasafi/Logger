@@ -47,6 +47,7 @@ QVariant LogModel::headerData(int section, Qt::Orientation orientation, int role
 
 int LogModel::rowCount(const QModelIndex &parent) const
 {
+    Q_UNUSED(parent)
 //    if (!parent.isValid())
 //        return 0;
 
@@ -55,6 +56,7 @@ int LogModel::rowCount(const QModelIndex &parent) const
 
 int LogModel::columnCount(const QModelIndex &parent) const
 {
+    Q_UNUSED(parent)
 //    if (!parent.isValid())
 //        return 0;
 
