@@ -5,14 +5,12 @@ HEADERS += \
     $$PWD/src/objectprofiller.h \
     $$PWD/src/logger.h \
     $$PWD/src/logmodel.h \
-    $$PWD/src/qmllogmodel.h \
     $$PWD/src/showlogdialog.h
 
 SOURCES += \
     $$PWD/src/objectprofiller.cpp \
     $$PWD/src/logger.cpp \
     $$PWD/src/logmodel.cpp \
-    $$PWD/src/qmllogmodel.cpp \
     $$PWD/src/showlogdialog.cpp
 
 linux {
