@@ -71,8 +71,24 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
     if (index.row() >= dataList.size() || index.row() < 0)
         return QVariant("-");
 
+    LogData *d = dataList.at(index.row());
+#ifdef QT_QML_LIB
+    switch (role) {
+    case IdRole:
+        return index.row() + 1;
+    case TypeRole:
+        return d->typeString();
+    case TitleRole:
+        return d->title;
+    case FileRole:
+        return d->file;
+    case FunctionRole:
+        return d->function;
+    case LineRole:
+        return d->line;
+    }
+#else
     if (role == Qt::DisplayRole) {
-        LogData *d = dataList.at(index.row());
 
         switch (index.column()) {
         case COL_ID:
@@ -89,7 +105,20 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
             return d->line;
         }
     }
+#endif
     return QVariant();
+}
+
+QHash<int, QByteArray> LogModel::roleNames() const
+{
+    return {
+        {IdRole, "id"},
+        {TitleRole, "title"},
+        {TypeRole, "type"},
+        {FileRole, "file"},
+        {FunctionRole, "func"},
+        {LineRole, "line"}
+    };
 }
 
 void LogModel::append(LogModel::LogData *row)

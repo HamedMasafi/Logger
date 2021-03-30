@@ -20,6 +20,17 @@ public:
 
         QString typeString() const;
     };
+#ifdef QT_QML_LIB
+    enum Role {
+        IdRole = Qt::UserRole + 1,
+        TypeRole,
+        TitleRole,
+        FileRole,
+        FunctionRole,
+        LineRole
+    };
+
+#endif
     explicit LogModel(QObject *parent = 0);
 
     // Header:
@@ -31,6 +42,8 @@ public:
 
     QVariant data(const QModelIndex &index,
                   int role = Qt::DisplayRole) const override;
+
+    QHash<int, QByteArray> roleNames() const override;
 
     void append(LogData *row);
     LogData *row(const QModelIndex &index) const;

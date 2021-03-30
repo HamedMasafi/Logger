@@ -90,6 +90,7 @@ void Logger::log(const char *fileName, const char *function, int lineNumber,
         switch (l->type) {
         case QtDebugMsg:
             qDebug("%s", l->title.toLocal8Bit().data());
+            // qDebug("%s %s", l->title.toLocal8Bit().data(), l->file.toLocal8Bit().data());
             break;
         case QtInfoMsg:
             qInfo("%s", l->title.toLocal8Bit().data());
