@@ -9,9 +9,19 @@ class LogModel : public QAbstractTableModel
     Q_OBJECT
 
 public:
+    enum LogType {
+        Debugtype = QtDebugMsg,
+        WarningType = QtWarningMsg,
+        CriticalType = QtCriticalMsg,
+        FatalType = QtFatalMsg,
+        InfoType = QtInfoMsg,
+        SystemType = QtSystemMsg
+    };
+    Q_ENUM(LogType)
+
     struct LogData {
         int id;
-        QtMsgType type;
+        LogType type;
         QString title;
         QString body;
         QString file;
@@ -20,10 +30,13 @@ public:
 
         QString typeString() const;
     };
+
+
 #ifdef QT_QML_LIB
     enum Role {
         IdRole = Qt::UserRole + 1,
         TypeRole,
+        TypeStringRole,
         TitleRole,
         FileRole,
         FunctionRole,

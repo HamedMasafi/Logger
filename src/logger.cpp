@@ -75,7 +75,7 @@ void Logger::log(const char *fileName, const char *function, int lineNumber,
 
     auto l = new LogModel::LogData;
     l->id = _model->rowCount(QModelIndex()) + 1;
-    l->type = type;
+    l->type = static_cast<LogModel::LogType>(type);
     l->file = fileName;
     l->function = function;
     l->line = lineNumber;
@@ -88,20 +88,20 @@ void Logger::log(const char *fileName, const char *function, int lineNumber,
 
     if (redirectMessages)
         switch (l->type) {
-        case QtDebugMsg:
+        case LogModel::Debugtype:
             qDebug("%s", l->title.toLocal8Bit().data());
             // qDebug("%s %s", l->title.toLocal8Bit().data(), l->file.toLocal8Bit().data());
             break;
-        case QtInfoMsg:
+        case LogModel::InfoType:
             qInfo("%s", l->title.toLocal8Bit().data());
             break;
-        case QtWarningMsg:
+        case LogModel::WarningType:
             qWarning("%s", l->title.toLocal8Bit().data());
             break;
-        case QtCriticalMsg:
+        case LogModel::CriticalType:
             qCritical("%s", l->title.toLocal8Bit().data());
             break;
-        case QtFatalMsg:
+        case LogModel::FatalType:
             qFatal("%s", l->title.toLocal8Bit().data());
         }
 }

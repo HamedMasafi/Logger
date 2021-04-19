@@ -77,6 +77,8 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
     case IdRole:
         return index.row() + 1;
     case TypeRole:
+        return d->type;
+    case TypeStringRole:
         return d->typeString();
     case TitleRole:
         return d->title;
@@ -115,6 +117,7 @@ QHash<int, QByteArray> LogModel::roleNames() const
         {IdRole, "id"},
         {TitleRole, "title"},
         {TypeRole, "type"},
+        {TypeStringRole, "typeString"},
         {FileRole, "file"},
         {FunctionRole, "func"},
         {LineRole, "line"}
@@ -142,19 +145,19 @@ LogModel::LogData *LogModel::row(const QModelIndex &index) const
 QString LogModel::LogData::typeString() const
 {
     switch (type) {
-    case QtDebugMsg:
+    case Debugtype:
         return "Debug";
         break;
-    case QtInfoMsg:
+    case InfoType:
         return "Info";
         break;
-    case QtWarningMsg:
+    case WarningType:
         return "Warning";
         break;
-    case QtCriticalMsg:
+    case CriticalType:
         return "Error";
         break;
-    case QtFatalMsg:
+    case FatalType:
         return "Fatal";
     }
 
