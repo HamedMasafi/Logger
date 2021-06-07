@@ -83,8 +83,8 @@ void Logger::log(const char *fileName, const char *function, int lineNumber,
     l->body = QString();
     _model->append(l);
 
-    *stream << l->id << " "
-            << "[" << l->typeString() << "] " << s << Qt::endl;
+//    *stream << l->id << " "
+//            << "[" << l->typeString() << "] " << s << Qt::endl;
 
     if (redirectMessages)
         switch (l->type) {
