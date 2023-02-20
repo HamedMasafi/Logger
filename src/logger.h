@@ -1,5 +1,4 @@
-#ifndef LOGGER_H
-#define LOGGER_H
+#pragma once
 
 #include <QtCore/qglobal.h>
 #include <QtCore/QAbstractTableModel>
@@ -59,5 +58,3 @@ public:
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Logger::Flags)
-
-#endif // LOGGER_H

@@ -18,8 +18,7 @@
 **
 **************************************************************************/
 
-#ifndef OBJECTPROFILLER_H
-#define OBJECTPROFILLER_H
+#pragma once
 
 #include <QtCore/QObject>
 #include <QtCore/qglobal.h>
@@ -49,10 +48,10 @@ public:
 
     void addData(const char *code, QObject *obj, const char *fileName, const char *function, int lineNumber);
 
-public slots:
+public Q_SLOTS:
     void printReport();
 
-private slots:
+private Q_SLOTS:
     void obj_destroyed(QObject * = Q_NULLPTR);
 
     // QObject interface
@@ -62,5 +61,3 @@ protected:
 private:
     bool isValidPointer(void *ptr);
 };
-
-#endif // OBJECTPROFILLER_H

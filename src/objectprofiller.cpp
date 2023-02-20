@@ -31,7 +31,7 @@ ObjectProfiller::ObjectProfiller(QObject *parent) : QObject(parent)
 void ObjectProfiller::printReport()
 {
     qDebug() << "=== ObjectProfiller Report ===";
-    foreach (ObjectData *data, _dataList){
+    for (auto &data : _dataList) {
         if(data->obj == nullptr)
             data->isDestroyed = true;
 

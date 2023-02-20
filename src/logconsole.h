@@ -1,5 +1,4 @@
-#ifndef LOGCONSOLE_H
-#define LOGCONSOLE_H
+#pragma once
 
 #include <QtCore/QObject>
 #include <QtCore/qglobal.h>
@@ -16,7 +15,7 @@ class CinReader : public QThread
 protected:
     void run();
 
-signals:
+Q_SIGNALS:
     void keyPressed(const int &key);
     void upPressed();
     void downPressed();
@@ -87,10 +86,6 @@ private:
     void inverseColorBg();
 
     void printType(QString t, bool printColon = true);
-    
-signals:
 
-public slots:
+public Q_SLOTS:
 };
-
-#endif // LOGCONSOLE_H

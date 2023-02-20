@@ -1,5 +1,4 @@
-#ifndef SHOWLOGDIALOG_H
-#define SHOWLOGDIALOG_H
+#pragma once
 
 #ifdef QT_WIDGETS_LIB
 
@@ -16,11 +15,9 @@ public:
 
 protected:
     void changeEvent(QEvent *e);
-private slots:
+private Q_SLOTS:
     void on_lineEdit_textChanged(const QString &arg1);
     void on_treeView_clicked(const QModelIndex &index);
 };
 
 #endif
-
-#endif // SHOWLOGDIALOG_H

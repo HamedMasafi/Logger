@@ -38,7 +38,7 @@ QList<LogConsole *> instances;
 void resizeHandler(int sig)
 {
     Q_UNUSED(sig)
-    foreach (LogConsole *c, instances)
+    for (auto &c : instances)
         c->screenSizeChanged();
 }
 
@@ -557,42 +557,42 @@ void LogConsole::inverseColorBg()
 
 void CinReader::run()
 {
-    forever
+    while(true)
     {
         int i = getchar();
         switch (i) {
 
         case KEY_UP:
-            emit upPressed();
+            Q_EMIT upPressed();
             break;
         case KEY_DOWN:
-            emit downPressed();
+            Q_EMIT downPressed();
             break;
         case KEY_RIGHT:
-            emit rightPressed();
+            Q_EMIT rightPressed();
             break;
         case KEY_LEFT:
-            emit leftPressed();
+            Q_EMIT leftPressed();
             break;
         case KEY_PLUS:
-            emit plusPressed();
+            Q_EMIT plusPressed();
             cin.clear();
             break;
         case KEY_MINUS:
-            emit minusPressed();
+            Q_EMIT minusPressed();
             cin.clear();
             break;
 
         case 10:
-            emit returnPressed();
+            Q_EMIT returnPressed();
             break;
 
         case 9:
-            emit tabPressed(false);
+            Q_EMIT tabPressed(false);
             break;
 
         case 90:
-            emit tabPressed(true);
+            Q_EMIT tabPressed(true);
             break;
 
         case 48:
@@ -605,12 +605,12 @@ void CinReader::run()
         case 55:
         case 56:
         case 57:
-            emit numPressed(i - 48);
+            Q_EMIT numPressed(i - 48);
             break;
 
         default:
             //            cout << i << "\n";
-            emit keyPressed(i);
+            Q_EMIT keyPressed(i);
         }
     }
 }
