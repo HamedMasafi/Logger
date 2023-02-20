@@ -45,9 +45,9 @@ target_link_libraries(Logger PUBLIC
 
 
 target_include_directories(Logger_Static PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 target_include_directories(Logger PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
