@@ -43,6 +43,7 @@ public:
         LineRole
     };
 
+    QHash<int, QByteArray> roleNames() const override;
 #endif
     explicit LogModel(QObject *parent = 0);
 
@@ -56,7 +57,6 @@ public:
     QVariant data(const QModelIndex &index,
                   int role = Qt::DisplayRole) const override;
 
-    QHash<int, QByteArray> roleNames() const override;
 
     void append(LogData *row);
     LogData *row(const QModelIndex &index) const;

@@ -111,6 +111,7 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
+#ifdef QT_QML_LIB
 QHash<int, QByteArray> LogModel::roleNames() const
 {
     return {
@@ -123,6 +124,7 @@ QHash<int, QByteArray> LogModel::roleNames() const
         {LineRole, "line"}
     };
 }
+#endif
 
 void LogModel::append(LogModel::LogData *row)
 {
