@@ -42,3 +42,12 @@ target_link_libraries(Logger PUBLIC
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Widgets
 )
+
+
+target_include_directories(Logger_Static PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_include_directories(Logger PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
