@@ -7,6 +7,8 @@ set(LIB_SOURCES
   src/logger.h
   src/logmodel.cpp
   src/logmodel.h
+  src/logsproxymodel.h
+  src/logsproxymodel.cpp
   src/objectprofiller.cpp
   src/objectprofiller.h
   src/showlogdialog.cpp
