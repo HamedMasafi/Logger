@@ -6,7 +6,10 @@
 #include <QHash>
 #include <QThread>
 
-class LogModel;
+namespace Logger
+{
+
+class LogsModel;
 class CinReader : public QThread
 {
     Q_OBJECT
@@ -31,7 +34,7 @@ Q_SIGNALS:
 class LogConsole : public QObject
 {
     Q_OBJECT
-    LogModel *_model;
+    LogsModel *_model;
 
     int currentRow;
     int beginRow;
@@ -52,16 +55,7 @@ class LogConsole : public QObject
     QString status;
     bool printLines;
 
-    enum Color{
-        Black,
-        Red,
-        Green,
-        Yellow,
-        Blue,
-        Magenta,
-        Cyan,
-        White
-    };
+    enum Color { Black, Red, Green, Yellow, Blue, Magenta, Cyan, White };
 
 public:
     explicit LogConsole(QObject *parent = nullptr);
@@ -89,3 +83,5 @@ private:
 
 public Q_SLOTS:
 };
+
+}

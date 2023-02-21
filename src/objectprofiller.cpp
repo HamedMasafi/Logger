@@ -21,7 +21,7 @@
 #include <QtGui/QGuiApplication>
 #include <QtCore/QDebug>
 
-#include "objectprofiller.h"
+#include "Logger/objectprofiller.h"
 
 ObjectProfiller::ObjectProfiller(QObject *parent) : QObject(parent)
 {

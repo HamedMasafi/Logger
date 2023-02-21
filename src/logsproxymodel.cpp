@@ -1,8 +1,22 @@
-#include "logsproxymodel.h"
+#include "Logger/logsproxymodel.h"
+#include "Logger/log.h"
+#include "Logger/logger.h"
+#include "Logger/logsmodel.h"
 
-LogsProxyModel::LogsProxyModel(LogModel *model, QObject *parent) : QSortFilterProxyModel(parent)
+namespace Logger {
+
+LogsProxyModel::LogsProxyModel(QObject *parent)
+    : QSortFilterProxyModel(parent)
+    , _parentModel(instance.model())
 {
+    setSourceModel(_parentModel);
+}
 
+LogsProxyModel::LogsProxyModel(LogsModel *model, QObject *parent)
+    : QSortFilterProxyModel(parent)
+    , _parentModel(model)
+{
+    setSourceModel(_parentModel);
 }
 
 QString LogsProxyModel::filterText() const
@@ -13,16 +27,7 @@ QString LogsProxyModel::filterText() const
 void LogsProxyModel::setFilterText(const QString &newFilterText)
 {
     _filterText = newFilterText;
-}
-
-bool LogsProxyModel::showTrace() const
-{
-    return _showTrace;
-}
-
-void LogsProxyModel::setShowTrace(bool newShowTrace)
-{
-    _showTrace = newShowTrace;
+    invalidateRowsFilter();
 }
 
 bool LogsProxyModel::showDebug() const
@@ -33,6 +38,7 @@ bool LogsProxyModel::showDebug() const
 void LogsProxyModel::setShowDebug(bool newShowDebug)
 {
     _showDebug = newShowDebug;
+    invalidateRowsFilter();
 }
 
 bool LogsProxyModel::showInformation() const
@@ -43,6 +49,7 @@ bool LogsProxyModel::showInformation() const
 void LogsProxyModel::setShowInformation(bool newShowInformation)
 {
     _showInformation = newShowInformation;
+    invalidateRowsFilter();
 }
 
 bool LogsProxyModel::showWarning() const
@@ -53,14 +60,59 @@ bool LogsProxyModel::showWarning() const
 void LogsProxyModel::setShowWarning(bool newShowWarning)
 {
     _showWarning = newShowWarning;
+    invalidateRowsFilter();
 }
 
-bool LogsProxyModel::showError() const
+bool LogsProxyModel::showCritical() const
 {
-    return _showError;
+    return _showCritical;
 }
 
-void LogsProxyModel::setShowError(bool newShowError)
+void LogsProxyModel::setShowCritical(bool newShowCritical)
 {
-    _showError = newShowError;
+    _showCritical = newShowCritical;
+    invalidateRowsFilter();
+}
+
+bool LogsProxyModel::showFatal() const
+{
+    return _showFatal;
+}
+
+void LogsProxyModel::setShowFatal(bool newShowFatal)
+{
+    _showFatal = newShowFatal;
+    invalidateRowsFilter();
+}
+
+bool LogsProxyModel::filterAcceptsRow(int source_row, const QModelIndex &source_parent) const
+{
+
+    auto row = _parentModel->row(source_row);
+
+    if (!row)
+        return false;
+
+    if (!_showDebug && row->type == Logger::DebugType)
+        return false;
+
+    if (!_showWarning && row->type == Logger::WarningType)
+        return false;
+
+    if (!_showCritical && row->type == Logger::CriticalType)
+        return false;
+
+    if (!_showFatal && row->type == Logger::FatalType)
+        return false;
+
+    if (!_showInformation && row->type == Logger::InfoType)
+        return false;
+
+
+    if (_filterText.size() && !row->title.contains(_filterText))
+        return false;
+
+    return true;
+}
+
 }

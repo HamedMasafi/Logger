@@ -1,4 +1,5 @@
-#include "logmodel.h"
+#include "Logger/logsmodel.h"
+#include "Logger/log.h"
 
 #define COL_ID 0
 #define COL_Type 1
@@ -16,12 +17,16 @@
  *  5: function
  *  6: line
  */
-LogModel::LogModel(QObject *parent)
+
+namespace Logger
+{
+
+LogsModel::LogsModel(QObject *parent)
     : QAbstractTableModel(parent)
 {
 }
 
-QVariant LogModel::headerData(int section, Qt::Orientation orientation, int role) const
+QVariant LogsModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if (role != Qt::DisplayRole)
         return QVariant();
@@ -45,25 +50,25 @@ QVariant LogModel::headerData(int section, Qt::Orientation orientation, int role
     return QVariant();
 }
 
-int LogModel::rowCount(const QModelIndex &parent) const
+int LogsModel::rowCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent)
-//    if (!parent.isValid())
-//        return 0;
+    //    if (!parent.isValid())
+    //        return 0;
 
     return dataList.count();
 }
 
-int LogModel::columnCount(const QModelIndex &parent) const
+int LogsModel::columnCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent)
-//    if (!parent.isValid())
-//        return 0;
+    //    if (!parent.isValid())
+    //        return 0;
 
     return 6;
 }
 
-QVariant LogModel::data(const QModelIndex &index, int role) const
+QVariant LogsModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid())
         return QVariant();
@@ -71,7 +76,7 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
     if (index.row() >= dataList.size() || index.row() < 0)
         return QVariant("-");
 
-    LogData *d = dataList.at(index.row());
+    auto d = dataList.at(index.row());
 #ifdef QT_QML_LIB
     switch (role) {
     case IdRole:
@@ -91,7 +96,6 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
     }
 #else
     if (role == Qt::DisplayRole) {
-
         switch (index.column()) {
         case COL_ID:
             return index.row() + 1;
@@ -114,26 +118,24 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
 #ifdef QT_QML_LIB
 QHash<int, QByteArray> LogModel::roleNames() const
 {
-    return {
-        {IdRole, "id"},
-        {TitleRole, "title"},
-        {TypeRole, "type"},
-        {TypeStringRole, "typeString"},
-        {FileRole, "file"},
-        {FunctionRole, "func"},
-        {LineRole, "line"}
-    };
+    return {{IdRole, "id"},
+            {TitleRole, "title"},
+            {TypeRole, "type"},
+            {TypeStringRole, "typeString"},
+            {FileRole, "file"},
+            {FunctionRole, "func"},
+            {LineRole, "line"}};
 }
 #endif
 
-void LogModel::append(LogModel::LogData *row)
+void LogsModel::append(Log *row)
 {
     beginInsertRows(QModelIndex(), dataList.count(), dataList.count());
     dataList.append(row);
     endInsertRows();
 }
 
-LogModel::LogData *LogModel::row(const QModelIndex &index) const
+Log *LogsModel::row(const QModelIndex &index) const
 {
     if (!index.isValid())
         return nullptr;
@@ -144,24 +146,9 @@ LogModel::LogData *LogModel::row(const QModelIndex &index) const
     return dataList.at(index.row());
 }
 
-QString LogModel::LogData::typeString() const
+Log *LogsModel::row(int index) const
 {
-    switch (type) {
-    case Debugtype:
-        return "Debug";
-        break;
-    case InfoType:
-        return "Info";
-        break;
-    case WarningType:
-        return "Warning";
-        break;
-    case CriticalType:
-        return "Error";
-        break;
-    case FatalType:
-        return "Fatal";
-    }
+    return dataList.at(index);
+}
 
-    return "";
 }

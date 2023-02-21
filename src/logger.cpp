@@ -1,53 +1,72 @@
 #include <QtCore/QDebug>
 
-#include <QFile>
+#include <QApplication>
 #include <QDateTime>
+#include <QFile>
 #include <QMetaMethod>
 #include <iostream>
-#include <QApplication>
+
 
 #ifdef QT_WIDGETS_LIB
-#include "showlogdialog.h"
+#include "Logger/showlogdialog.h"
 #else
-#   ifndef LOGGER_NO_CONSOLE
-#       include "logconsole.h"
-#   endif
+#ifndef LOGGER_NO_CONSOLE
+#include "Logger/logconsole.h"
+#endif
 #endif
 
-#include "logger.h"
-#include "logmodel.h"
+#include "Logger/log.h"
+#include "Logger/logger.h"
+#include "Logger/logsmodel.h"
 
-void messageOutput(QtMsgType type, const QMessageLogContext &context,
-                   const QString &msg)
+namespace Logger
 {
-    Logger::instance()->log(context.file, context.function, context.line, type,
-                            msg.toLocal8Bit().data());
+LogManager instance;
 }
 
-LogModel *Logger::model() const
+void messageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+    Logger::instance.log(context.file, context.function, context.line, type, msg.toLocal8Bit().data());
+}
+
+namespace Logger
+{
+
+LogsModel *LogManager::model() const
 {
     return _model;
 }
 
-Logger::Logger(QObject *parent) : QObject(parent)
+LogManager::LogManager(QObject *parent)
+    : QObject(parent)
 {
-    _model = new LogModel(this);
+    _model = new LogsModel(this);
 }
 
-Logger *Logger::instance()
+LogManager *LogManager::instance()
 {
-    static Logger *instance = 0;
+    static LogManager *instance = 0;
 
     if (!instance)
-        instance = new Logger;
+        instance = new LogManager;
 
     return instance;
 }
 
-void Logger::log(const char *fileName, const char *function, int lineNumber,
-                 QtMsgType type, const char *templateString, QVariant val0,
-                 QVariant val1, QVariant val2, QVariant val3, QVariant val4,
-                 QVariant val5, QVariant val6, QVariant val7, QVariant val8,
+void LogManager::log(const char *fileName,
+                 const char *function,
+                 int lineNumber,
+                 QtMsgType type,
+                 const char *templateString,
+                 QVariant val0,
+                 QVariant val1,
+                 QVariant val2,
+                 QVariant val3,
+                 QVariant val4,
+                 QVariant val5,
+                 QVariant val6,
+                 QVariant val7,
+                 QVariant val8,
                  QVariant val9)
 {
     QString s(templateString);
@@ -73,9 +92,9 @@ void Logger::log(const char *fileName, const char *function, int lineNumber,
     if (val9 != QVariant())
         s = s.arg(val9.toString());
 
-    auto l = new LogModel::LogData;
+    auto l = new Log;
     l->id = _model->rowCount(QModelIndex()) + 1;
-    l->type = static_cast<LogModel::LogType>(type);
+    l->type = static_cast<Logger::LogType>(type);
     l->file = fileName;
     l->function = function;
     l->line = lineNumber;
@@ -83,30 +102,30 @@ void Logger::log(const char *fileName, const char *function, int lineNumber,
     l->body = QString();
     _model->append(l);
 
-//    *stream << l->id << " "
-//            << "[" << l->typeString() << "] " << s << Qt::endl;
+    //    *stream << l->id << " "
+    //            << "[" << l->typeString() << "] " << s << Qt::endl;
 
     if (redirectMessages)
         switch (l->type) {
-        case LogModel::Debugtype:
+        case Logger::DebugType:
             qDebug("%s", l->title.toLocal8Bit().data());
             // qDebug("%s %s", l->title.toLocal8Bit().data(), l->file.toLocal8Bit().data());
             break;
-        case LogModel::InfoType:
+        case Logger::InfoType:
             qInfo("%s", l->title.toLocal8Bit().data());
             break;
-        case LogModel::WarningType:
+        case Logger::WarningType:
             qWarning("%s", l->title.toLocal8Bit().data());
             break;
-        case LogModel::CriticalType:
+        case Logger::CriticalType:
             qCritical("%s", l->title.toLocal8Bit().data());
             break;
-        case LogModel::FatalType:
+        case Logger::FatalType:
             qFatal("%s", l->title.toLocal8Bit().data());
         }
 }
 
-void Logger::init(Flags f, const QString &path)
+void LogManager::init(Flags f, const QString &path)
 {
     if (path == QString())
         _path = qApp->applicationDirPath();
@@ -114,8 +133,7 @@ void Logger::init(Flags f, const QString &path)
         _path = path;
     qInstallMessageHandler(messageOutput);
 
-    logFile
-        = new QFile(_path + "/" + QDateTime::currentDateTime().toString("ddMMdd-hhmmss.log"));
+    logFile = new QFile(_path + "/" + QDateTime::currentDateTime().toString("ddMMdd-hhmmss.log"));
     logFile->open(QIODevice::WriteOnly | QIODevice::Text);
     stream = new QTextStream(logFile);
 
@@ -125,14 +143,20 @@ void Logger::init(Flags f, const QString &path)
         ShowLogDialog *dialog = new ShowLogDialog;
         dialog->show();
 #else
-#   ifndef LOGGER_NO_CONSOLE
+#ifndef LOGGER_NO_CONSOLE
         LogConsole *c = new LogConsole(this);
         c->setTerminalMode(f & TerminalMode);
         c->start();
-#   endif
+#endif
 #endif
     } else {
         redirectMessages = true;
     }
 }
 
+void init(Flags f, const QString &path)
+{
+    instance.init();
+}
+
+}

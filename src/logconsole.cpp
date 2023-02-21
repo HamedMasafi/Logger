@@ -1,19 +1,19 @@
-#include "logconsole.h"
-#include "logger.h"
+#include "Logger/logconsole.h"
+#include "Logger/logger.h"
+#include "Logger/logsmodel.h"
 
-#include <QModelIndex>
-#include <QDebug>
-#include <iostream>
-#include <iomanip>
-#include <sys/ioctl.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <termios.h>
-#include <QFile>
 #include <QDataStream>
-#include <signal.h>
+#include <QDebug>
+#include <QFile>
+#include <QModelIndex>
 #include <QtMath>
-#include "logmodel.h"
+#include <iomanip>
+#include <iostream>
+#include <signal.h>
+#include <stdio.h>
+#include <sys/ioctl.h>
+#include <termios.h>
+#include <unistd.h>
 
 using namespace std;
 
@@ -34,13 +34,17 @@ using namespace std;
 #define HBOX "\u25AC"
 #define VBOX "\u2503"
 
-QList<LogConsole *> instances;
+QList<Logger::LogConsole *> instances;
+
 void resizeHandler(int sig)
 {
     Q_UNUSED(sig)
     for (auto &c : instances)
         c->screenSizeChanged();
 }
+
+namespace Logger
+{
 
 bool LogConsole::terminalMode() const
 {
@@ -52,7 +56,9 @@ void LogConsole::setTerminalMode(bool terminalMode)
     _terminalMode = terminalMode;
 }
 
-LogConsole::LogConsole(QObject *parent) : QObject(parent), _terminalMode(false)
+LogConsole::LogConsole(QObject *parent)
+    : QObject(parent)
+    , _terminalMode(false)
 {
 }
 
@@ -61,10 +67,11 @@ void LogConsole::start()
     beginRow = 0;
     beginColumn = 0;
     printLines = true;
-    status = "t=Terminal mode    Enter=Show details    +/-=Change column size  "
-             " 0-5=Show/Hide columns";
+    status =
+        "t=Terminal mode    Enter=Show details    +/-=Change column size  "
+        " 0-5=Show/Hide columns";
     instances.append(this);
-    _model = Logger::instance()->model();
+    _model = instance.model();
     for (int i = 0; i < _model->columnCount(); i++) {
         headerWidths.insert(i, 10);
         headerVisible.insert(i, true);
@@ -91,8 +98,7 @@ void LogConsole::start()
         f.close();
     }
 
-    connect(_model, &QAbstractItemModel::rowsInserted,
-            [=](const QModelIndex &parent, int first, int last) {
+    connect(_model, &QAbstractItemModel::rowsInserted, [=](const QModelIndex &parent, int first, int last) {
         Q_UNUSED(parent);
         Q_UNUSED(last);
 
@@ -104,7 +110,6 @@ void LogConsole::start()
             beginRow = qMax(0, first - lines);
             this->printScreen();
         }
-
     });
 
     struct termios old_tio, new_tio;
@@ -209,8 +214,7 @@ void LogConsole::start()
         if (_terminalMode)
             return;
 
-        if (currentColumn >= 0 && currentColumn < _model->columnCount() - 1
-            && headerWidths[currentColumn] > 0) {
+        if (currentColumn >= 0 && currentColumn < _model->columnCount() - 1 && headerWidths[currentColumn] > 0) {
             headerWidths[currentColumn]--;
             this->printScreen();
         }
@@ -277,7 +281,6 @@ LogConsole::~LogConsole()
 
 void LogConsole::screenSizeChanged()
 {
-
     struct winsize w;
     ioctl(0, TIOCGWINSZ, &w);
 
@@ -347,7 +350,6 @@ void LogConsole::printScreen()
 
 void LogConsole::printType(QString t, bool printColon)
 {
-
     if (t == "Debug")
         setTextColor(Blue);
     else if (t == "Info")
@@ -398,11 +400,9 @@ void LogConsole::printRow(int row, bool scrollbar)
         QString s = "";
 
         if (row == -1) {
-            s = QString::number(i) + "-"
-                + _model->headerData(i, Qt::Horizontal).toString();
+            s = QString::number(i) + "-" + _model->headerData(i, Qt::Horizontal).toString();
         } else if (row != -2) {
-            s = _model->data(_model->index(row, i, QModelIndex()),
-                             Qt::DisplayRole).toString();
+            s = _model->data(_model->index(row, i, QModelIndex()), Qt::DisplayRole).toString();
         }
 
         int fieldLen = headerWidths.value(i, 10);
@@ -465,21 +465,14 @@ void LogConsole::printSummry(bool buffering)
         clearScreen();
         //        inverseColorBg();
         inverseColorBg();
-        cout << setw(10) << (currentRow + 1) << " of " << setw(10)
-             << _model->rowCount() << "\n";
+        cout << setw(10) << (currentRow + 1) << " of " << setw(10) << _model->rowCount() << "\n";
         restoreTxetColor();
     }
 
     for (int i = 0; i < _model->columnCount(); i++) {
-        cout << setw(10)
-             << _model->headerData(i, Qt::Horizontal)
-                    .toString()
-                    .toLatin1()
-                    .data();
+        cout << setw(10) << _model->headerData(i, Qt::Horizontal).toString().toLatin1().data();
 
-        QString buffer
-            = _model->data(_model->index(currentRow, i, QModelIndex()),
-                           Qt::DisplayRole).toString();
+        QString buffer = _model->data(_model->index(currentRow, i, QModelIndex()), Qt::DisplayRole).toString();
         if (!summryMode)
             cutText(buffer, width - 10);
 
@@ -537,12 +530,7 @@ void LogConsole::setTextColor(Color text, Color bg, bool bright)
     cyan         36         46
     white        37         47
     */
-    cout << QString("\033[%1;%2%3m")
-                .arg((int)text + 30)
-                .arg((int)bg + 40)
-                .arg(bright ? ";1" : "")
-                .toLatin1()
-                .data();
+    cout << QString("\033[%1;%2%3m").arg((int)text + 30).arg((int)bg + 40).arg(bright ? ";1" : "").toLatin1().data();
 }
 
 void LogConsole::restoreTxetColor()
@@ -557,11 +545,9 @@ void LogConsole::inverseColorBg()
 
 void CinReader::run()
 {
-    while(true)
-    {
+    while (true) {
         int i = getchar();
         switch (i) {
-
         case KEY_UP:
             Q_EMIT upPressed();
             break;
@@ -613,4 +599,6 @@ void CinReader::run()
             Q_EMIT keyPressed(i);
         }
     }
+}
+
 }
