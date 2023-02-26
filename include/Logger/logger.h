@@ -46,7 +46,7 @@ public:
     LogManager(QObject *parent = 0);
 
     static LogManager *instance();
-    void log(const char *fileName, const char *function, int lineNumber,
+    void log(const char *fileName, const char *function, int lineNumber, const char *category,
              QtMsgType type,
              const char *templateString,
              QVariant val0 = QVariant(),

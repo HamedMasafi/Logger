@@ -109,7 +109,7 @@ bool LogsProxyModel::filterAcceptsRow(int source_row, const QModelIndex &source_
         return false;
 
 
-    if (_filterText.size() && !row->title.contains(_filterText))
+    if (_filterText.size() && !row->title.contains(_filterText) && !row->category.contains(_filterText))
         return false;
 
     return true;

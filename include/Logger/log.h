@@ -23,12 +23,14 @@ class Log
 public:
     Log();
 
+    Log(int id, LogType type, QString title, QString body, QString file, QString function, QString category, int line);
     int id;
     LogType type;
     QString title;
     QString body;
     QString file;
     QString function;
+    QString category;
     int line;
 
     QString typeString() const;

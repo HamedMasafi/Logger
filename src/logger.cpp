@@ -26,7 +26,7 @@ LogManager instance;
 
 void messageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    Logger::instance.log(context.file, context.function, context.line, type, msg.toLocal8Bit().data());
+    Logger::instance.log(context.file, context.function, context.line, context.category, type, msg.toLocal8Bit().data());
 }
 
 namespace Logger
@@ -56,6 +56,7 @@ LogManager *LogManager::instance()
 void LogManager::log(const char *fileName,
                  const char *function,
                  int lineNumber,
+                 const char *category,
                  QtMsgType type,
                  const char *templateString,
                  QVariant val0,
@@ -96,6 +97,7 @@ void LogManager::log(const char *fileName,
     l->id = _model->rowCount(QModelIndex()) + 1;
     l->type = static_cast<Logger::LogType>(type);
     l->file = fileName;
+    l->category = category;
     l->function = function;
     l->line = lineNumber;
     l->title = s;
@@ -109,7 +111,6 @@ void LogManager::log(const char *fileName,
         switch (l->type) {
         case Logger::DebugType:
             qDebug("%s", l->title.toLocal8Bit().data());
-            // qDebug("%s %s", l->title.toLocal8Bit().data(), l->file.toLocal8Bit().data());
             break;
         case Logger::InfoType:
             qInfo("%s", l->title.toLocal8Bit().data());

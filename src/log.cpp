@@ -7,6 +7,18 @@ Log::Log()
 {
 }
 
+Log::Log(int id, LogType type, QString title, QString body, QString file, QString function, QString category, int line)
+    : id(id)
+    , type(type)
+    , title(std::move(title))
+    , body(std::move(body))
+    , file(std::move(file))
+    , function(std::move(function))
+    , category(std::move(category))
+    , line(line)
+{
+}
+
 QString Logger::Log::typeString() const
 {
     switch (type) {
