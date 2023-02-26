@@ -14,7 +14,7 @@ class LogsModel : public QAbstractTableModel
 public:
 
 #ifdef QT_QML_LIB
-    enum Role { IdRole = Qt::UserRole + 1, TypeRole, TypeStringRole, TitleRole, FileRole, FunctionRole, LineRole };
+    enum Role { IdRole = Qt::UserRole + 1, TypeRole, TypeStringRole, MessageRole, FileRole, FunctionRole, LineRole, CategoryRole };
 
     QHash<int, QByteArray> roleNames() const override;
 #endif

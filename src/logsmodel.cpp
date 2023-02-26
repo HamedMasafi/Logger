@@ -3,10 +3,11 @@
 
 #define COL_ID 0
 #define COL_Type 1
-#define COL_TITLE 2
+#define COL_Message 2
 #define COL_File 3
 #define COL_Function 4
 #define COL_Line 5
+#define COL_Category 6
 
 /*
  * Headers:
@@ -37,7 +38,7 @@ QVariant LogsModel::headerData(int section, Qt::Orientation orientation, int rol
             return tr("ID");
         case COL_Type:
             return tr("Type");
-        case COL_TITLE:
+        case COL_Message:
             return tr("Message");
         case COL_File:
             return tr("File");
@@ -45,6 +46,8 @@ QVariant LogsModel::headerData(int section, Qt::Orientation orientation, int rol
             return tr("Function");
         case COL_Line:
             return tr("Line");
+        case COL_Category:
+            return tr("Category");
         }
     }
     return QVariant();
@@ -65,7 +68,7 @@ int LogsModel::columnCount(const QModelIndex &parent) const
     //    if (!parent.isValid())
     //        return 0;
 
-    return 6;
+    return 7;
 }
 
 QVariant LogsModel::data(const QModelIndex &index, int role) const
@@ -93,6 +96,8 @@ QVariant LogsModel::data(const QModelIndex &index, int role) const
         return d->function;
     case LineRole:
         return d->line;
+    case CategoryRole:
+        return d->category;
     }
 #else
     if (role == Qt::DisplayRole) {
@@ -101,14 +106,16 @@ QVariant LogsModel::data(const QModelIndex &index, int role) const
             return index.row() + 1;
         case COL_Type:
             return d->typeString();
-        case COL_TITLE:
-            return d->title;
+        case COL_Message:
+            return d->message;
         case COL_File:
             return d->file;
         case COL_Function:
             return d->function;
         case COL_Line:
             return d->line;
+        case COL_Category:
+            return d->category;
         }
     }
 #endif
@@ -119,12 +126,13 @@ QVariant LogsModel::data(const QModelIndex &index, int role) const
 QHash<int, QByteArray> LogModel::roleNames() const
 {
     return {{IdRole, "id"},
-            {TitleRole, "title"},
+            {MessageRole, "message"},
             {TypeRole, "type"},
             {TypeStringRole, "typeString"},
             {FileRole, "file"},
             {FunctionRole, "func"},
-            {LineRole, "line"}};
+            {LineRole, "line"},
+            {CategoryRole, "category"}};
 }
 #endif
 

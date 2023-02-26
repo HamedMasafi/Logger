@@ -7,11 +7,10 @@ Log::Log()
 {
 }
 
-Log::Log(int id, LogType type, QString title, QString body, QString file, QString function, QString category, int line)
+Log::Log(int id, LogType type, QString message, QString file, QString function, QString category, int line)
     : id(id)
     , type(type)
-    , title(std::move(title))
-    , body(std::move(body))
+    , message(std::move(message))
     , file(std::move(file))
     , function(std::move(function))
     , category(std::move(category))

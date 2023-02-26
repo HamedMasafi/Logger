@@ -100,8 +100,7 @@ void LogManager::log(const char *fileName,
     l->category = category;
     l->function = function;
     l->line = lineNumber;
-    l->title = s;
-    l->body = QString();
+    l->message = s;
     _model->append(l);
 
     //    *stream << l->id << " "
@@ -110,19 +109,19 @@ void LogManager::log(const char *fileName,
     if (redirectMessages)
         switch (l->type) {
         case Logger::DebugType:
-            qDebug("%s", l->title.toLocal8Bit().data());
+            qDebug("%s", qPrintable(s));
             break;
         case Logger::InfoType:
-            qInfo("%s", l->title.toLocal8Bit().data());
+            qInfo("%s", qPrintable(s));
             break;
         case Logger::WarningType:
-            qWarning("%s", l->title.toLocal8Bit().data());
+            qWarning("%s", qPrintable(s));
             break;
         case Logger::CriticalType:
-            qCritical("%s", l->title.toLocal8Bit().data());
+            qCritical("%s", qPrintable(s));
             break;
         case Logger::FatalType:
-            qFatal("%s", l->title.toLocal8Bit().data());
+            qFatal("%s", qPrintable(s));
         }
 }
 

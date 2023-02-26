@@ -49,8 +49,7 @@ void ShowLogDialog::on_treeView_clicked(const QModelIndex &index)
         return;
 
     labelType->setText(data->typeString());
-    labelTitle->setText(data->title);
-    labelBody->setText(data->body);
+    labelTitle->setText(data->message);
     labelFile->setText(data->file);
     labelFunction->setText(data->function);
     labelLine->setText(QString::number(data->line));
