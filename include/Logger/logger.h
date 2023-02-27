@@ -6,15 +6,15 @@
 #include <QVariant>
 
 #define K_TRACE_DEBUG  qDebug() << "Trace at: " <<  __FILE__ << __FUNCTION__ << " #" << __LINE__
-#define K_LOG(type, ...) Logger::instance.log(__FILE__, __FUNCTION__, __LINE__, type, __VA_ARGS__)
+#define K_TRACE             Logger::instance.log(__FILE__, __FUNCTION__, __LINE__, nullptr, QtDebugMsg)
 
-#define K_TRACE(...)        Logger::instance.log(__FILE__, __FUNCTION__, __LINE__, QtDebugMsg, __VA_ARGS__)
+#define K_LOG(type, ...)    Logger::instance.log(__FILE__, __FUNCTION__, __LINE__, nullptr, type, __VA_ARGS__)
 
-#define K_DEBUG(...)        Logger::instance.log(__FILE__, __FUNCTION__, __LINE__, QtDebugMsg, __VA_ARGS__)
-#define K_WARNING(...)      Logger::instance.log(__FILE__, __FUNCTION__, __LINE__, QtWarningMsg, __VA_ARGS__)
-#define K_CRITICAL(...)     Logger::instance.log(__FILE__, __FUNCTION__, __LINE__, QtCriticalMsg, __VA_ARGS__)
-#define K_FATAL(...)        Logger::instance.log(__FILE__, __FUNCTION__, __LINE__, QtFatalMsg, __VA_ARGS__)
-#define K_INFORMATION(...)  Logger::instance.log(__FILE__, __FUNCTION__, __LINE__, QtInfoMsg, __VA_ARGS__)
+#define K_DEBUG(...)        K_LOG(QtDebugMsg, __VA_ARGS__)
+#define K_WARNING(...)      K_LOG(QtWarningMsg, __VA_ARGS__)
+#define K_CRITICAL(...)     K_LOG(QtCriticalMsg, __VA_ARGS__)
+#define K_FATAL(...)        K_LOG(QtFatalMsg, __VA_ARGS__)
+#define K_INFORMATION(...)  K_LOG(QtInfoMsg, __VA_ARGS__)
 
 class QFile;
 class QTextStream;
