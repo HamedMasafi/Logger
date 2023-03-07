@@ -1,6 +1,8 @@
 #include "Logger/logsmodel.h"
 #include "Logger/log.h"
 
+#include <QThread>
+
 #define COL_ID 0
 #define COL_Type 1
 #define COL_Message 2
@@ -138,9 +140,13 @@ QHash<int, QByteArray> LogModel::roleNames() const
 
 void LogsModel::append(Log *row)
 {
-    beginInsertRows(QModelIndex(), dataList.count(), dataList.count());
+    if (QThread::currentThread() == thread())
+        beginInsertRows(QModelIndex(), dataList.count(), dataList.count());
+
     dataList.append(row);
-    endInsertRows();
+
+    if (QThread::currentThread() == thread())
+        endInsertRows();
 }
 
 Log *LogsModel::row(const QModelIndex &index) const
